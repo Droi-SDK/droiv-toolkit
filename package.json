@@ -1,0 +1,24 @@
+{
+  "name": "droiv-toolkit",
+  "version": "0.0.1",
+  "contributors": [
+    "Marek Chen <c491843272@gmail.com>"
+  ],
+  "dependencies": {
+    "chalk": "^2.1.0",
+    "commander": "^2.11.0",
+    "nopt": "^4.0.1",
+    "xtoolkit": "^0.2.7"
+  },
+  "devDependencies": {
+    "browserify": "^13.3.0",
+    "eslint": "^3.14.0",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "gulp-concat": "^2.6.1",
+    "gulp-rename": "^1.2.2"
+  },
+  "bin": {
+    "droiv": "bin/droiv"
+  }
+}

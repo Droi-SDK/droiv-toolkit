@@ -22,6 +22,6 @@
     "gulp-rename": "^1.2.2"
   },
   "bin": {
-    "droiv": "bin/droiv"
+    "droiv": "bin/droiv.js"
   }
 }

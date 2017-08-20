@@ -3,7 +3,7 @@ var path = require('path'),
   logger = require('weexpack-common').CordovaLogger.get(),
   nopt,
   Q = require('q');
-var init = require('./init');
+var lib = require('./lib');
 
 module.exports = function (inputArgs) {
   initRequire();
@@ -48,7 +48,6 @@ function cli(inputArgs) {
     logger.error(err);
     process.exit(1);
   });
-
   logger.subscribe(events);
 
   var unparsedArgs = [];
@@ -68,8 +67,8 @@ function cli(inputArgs) {
     //return help(remain);
   }
 
-  if (cmd == 'init') {
-    initTemplate();
+  if (cmd == 'create') {
+    return initTemplate();
   } else {
     // TODO
     //platform/plugin
@@ -123,7 +122,8 @@ function cli(inputArgs) {
       cfg.lib = cfg.lib || {};
       cfg.lib.www = wwwCfg;
     }
-    return init(undashed[1] // dir to create the project in
+
+    return lib.raw.create(undashed[1] // dir to create the project in
       , undashed[2] // App id
       , undashed[3] // App name
       , cfg, events || undefined
@@ -143,4 +143,16 @@ function initRequire() {
     );
     process.exit(2);
   }
+}
+
+function ShowObjProperty(Obj) {
+  var PropertyList = '';
+  var PropertyCount = 0;
+  for (i in Obj) {
+    if (Obj.i != null)
+      PropertyList = PropertyList + i + '属性：' + Obj.i + '\r\n';
+    else
+      PropertyList = PropertyList + i + '方法\r\n';
+  }
+  console.log(PropertyList);
 }

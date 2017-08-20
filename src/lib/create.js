@@ -26,8 +26,6 @@ function initT (dir, optionalId, optionalName, cfg, extEvents) {
   var argumentCount = arguments.length;
   return Q.fcall(function () {
     events = setupEvents(extEvents);
-    logger.info('234');
-    throw new Error('222');
     if (!dir) {
       throw new CordovaError('Directory not specified. See `weexpack --help`.');
     }
@@ -95,7 +93,5 @@ function initT (dir, optionalId, optionalName, cfg, extEvents) {
     }
     cfg.lib.www.url = path.resolve(cfg.lib.www.url);
     return Q(cfg.lib.www.url);
-  }).then(
-    
-  );
+  });
 }

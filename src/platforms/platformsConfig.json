@@ -1,7 +1,8 @@
 {
   "vue": {
-    "packagename":"",
-    "url": "https://github.com/Droi-SDK/droiv-vue.git?"
+    "version": "~0.0.1",
+    "apiCompatibleSince": "5.0.0",
+    "deprecated": false
   },
 
   "ios": {
@@ -12,6 +13,7 @@
     "version": "^4.0.5",
     "apiCompatibleSince": "4.0.",
     "deprecated": false
+
   },
 
   "android": {
@@ -22,6 +24,5 @@
     "apiCompatibleSince": "5.0.0",
     "deprecated": false
   },
-
   "browser": {}
 }

@@ -2,7 +2,8 @@ var fs = require('fs'),
   shell = require('shelljs'),
   semver = require('semver'),
   Q = require('q'),
-  path = require('path');
+  path = require('path'),
+  CordovaError = require('weexpack-common').CordovaError;
 
 var global_config_path = process.env['DROIV_HOME'];
 
@@ -10,6 +11,8 @@ if (!global_config_path) {
   var HOME = process.env[(process.platform.slice(0, 3) == 'win') ? 'USERPROFILE' : 'HOME'];
   global_config_path = path.join(HOME, '.droiv');
 }
+
+var origCwd = null;
 
 var lib_path = path.join(global_config_path, 'lib');
 
@@ -43,7 +46,6 @@ function getLatestMatchingNpmVersion(module_name, version) {
     // If no version specified, get the latest
     return getLatestNpmVersion(module_name);
   }
-
   var validVersion = semver.valid(version, /* loose */ true);
   if (validVersion) {
     // This method is really intended to work with ranges, so if a version rather than a range is specified, we just
@@ -56,7 +58,6 @@ function getLatestMatchingNpmVersion(module_name, version) {
     // Just return what we were passed
     return Q(version);
   }
-
   return getAvailableNpmVersions(module_name).then(function (versions) {
     return semver.maxSatisfying(versions, validRange) || version;
   });
@@ -91,6 +92,7 @@ function getLatestNpmVersion(module_name) {
       // result is an object in the form:
       //     {'<version>': {version: '<version>'}}
       // (where <version> is the latest version)
+      
       return Object.keys(result)[0];
     });
   });
@@ -140,7 +142,115 @@ function addModuleProperty(module, symbol, modulePath, opt_wrap, opt_obj) {
   }
 }
 
+function isIOSProject(dir) {
+  if (exports.existsSync(path.join(dir, 'Weexplugin.xcodeproj'))) {
+    return true;
+  }
+}
+
+function isAndroidProject(dir) {
+  if (exports.existsSync(path.join(dir, 'build.gradle'))) {
+    return true;
+  }
+}
+
+function isRootDir(dir) {
+  if (exports.existsSync(path.join(dir, 'platforms'))) {
+    if (exports.existsSync(path.join(dir, 'web'))) {
+      // For sure is.
+      if (exports.existsSync(path.join(dir, 'config.xml'))) {
+        return 2;
+      } else {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
+function isCordova(dir) {
+  if (!dir) {
+    // Prefer PWD over cwd so that symlinked dirs within your PWD work correctly (CB-5687).
+    var pwd = process.env.PWD;
+    var cwd = process.cwd();
+    if (pwd && pwd != cwd && pwd != 'undefined') {
+      return this.isCordova(pwd) || this.isCordova(cwd);
+    }
+    return this.isCordova(cwd);
+  }
+  var bestReturnValueSoFar = false;
+  for (var i = 0; i < 1000; ++i) {
+    var result = isRootDir(dir);
+    if (result === 2) {
+      return dir;
+    }
+    if (result === 1) {
+      bestReturnValueSoFar = dir;
+    }
+    var parentDir = path.normalize(path.join(dir, '..'));
+    // Detect fs root.
+    if (parentDir == dir) {
+      return bestReturnValueSoFar;
+    }
+    dir = parentDir;
+  }
+  console.error('Hit an unhandled case in util.isCordova');
+  return false;
+}
+
+function cdProjectRoot(dir) {
+  var projectRoot = this.isCordova(dir);
+  if (!projectRoot) {
+    throw new CordovaError('Current working directory is not a weexpack project.');
+  }
+  if (!origCwd) {
+    origCwd = process.env.PWD || process.cwd();
+  }
+  process.env.PWD = projectRoot;
+  process.chdir(projectRoot);
+  return projectRoot;
+}
+
+function getOrigWorkingDirectory() {
+  return origCwd || process.env.PWD || process.cwd();
+}
+
+function _resetOrigCwd() {
+  origCwd = null;
+}
+
+function projectConfig(projectDir) {
+  var rootPath = path.join(projectDir, 'config.xml');
+  var wwwPath = path.join(projectDir, 'www', 'config.xml');
+  if (exports.existsSync(rootPath)) {
+    return rootPath;
+  } else if (exports.existsSync(wwwPath)) {
+    return wwwPath;
+  }
+  return false;
+}
+
+function findPlugins(pluginPath) {
+  var plugins = [],
+    stats;
+  if (exports.existsSync(pluginPath)) {
+    plugins = fs.readdirSync(pluginPath).filter(function (fileName) {
+      stats = fs.statSync(path.join(pluginPath, fileName));
+      return fileName != '.svn' && fileName != 'CVS' && stats.isDirectory();
+    });
+  }
+  return plugins;
+}
+
+exports.isCordova = isCordova;
+exports.cdProjectRoot = cdProjectRoot;
+exports.projectConfig = projectConfig;
+exports.findPlugins = findPlugins;
+exports.getOrigWorkingDirectory = getOrigWorkingDirectory;
+exports._resetOrigCwd = _resetOrigCwd;
 exports.existsSync = existsSync;
 exports.getLatestMatchingNpmVersion = getLatestMatchingNpmVersion;
 exports.getAvailableNpmVersions = getAvailableNpmVersions;
 exports.addModuleProperty = addModuleProperty;
+exports.isIOSProject = isIOSProject;
+exports.isAndroidProject = isAndroidProject;

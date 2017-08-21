@@ -1,8 +1,8 @@
 var npm = require('npm'),
   path = require('path'),
-  util = require('./util'),
   Q = require('q'),
   unpack = require('./unpack'),
+  util = require('./util'),
   cachedSettings = null,
   cachedSettingsValues = null;
 
@@ -26,7 +26,6 @@ function loadWithSettings(settings) {
     for (var prop in settings) {
       var currentValue = npm.config.get(prop);
       var newValue = settings[prop];
-
       if (currentValue !== newValue) {
         cachedSettingsValues = cachedSettingsValues || {};
         cachedSettings = cachedSettings || [];
@@ -81,17 +80,16 @@ function fetchPackage(packageName, packageVersion) {
 function cachePackage(packageName, packageVersion) {
   //todo Market-Injection
   // WEEK_HOOK
-  if (packageName !== "weexpack-android" && packageName !== "weexpack-ios") {
-    packageName = WeexMarket.info(packageName)
+  if (packageName !== 'droiv-android' && packageName !== 'droiv-ios' && packageName !== 'droiv-vue') {
+    packageName = WeexMarket.info(packageName);
   } else {
     packageName = {
       fullname: packageName
-    }
+    };
   }
 
   return Q(packageName).then(function (data) {
     packageName = data.fullname;
-
     var registry = 'http://registry.npm.taobao.org/';
     var cacheDir = path.join(util.libDirectory, 'npm_cache');
 
@@ -101,12 +99,12 @@ function cachePackage(packageName, packageVersion) {
     if (util.existsSync(packageTGZ)) {
       return unpack.unpackTgz(packageTGZ, path.resolve(packageCacheDir, 'package'));
     }
-
-    // Load with NPM configuration
-    return loadWithSettingsThenRestore({
+    var settings = {
       'cache': cacheDir,
       'registry': registry
-    },
+    };
+    // Load with NPM configuration
+    return loadWithSettingsThenRestore(settings,
       function () {
         // Invoke NPM Cache Add
         return Q.ninvoke(npm.commands, 'cache', ['add', (packageName + '@' + packageVersion)]).then(
@@ -120,6 +118,10 @@ function cachePackage(packageName, packageVersion) {
     );
   });
 }
+
+module.exports.invokeNpm = function () {
+
+};
 
 module.exports.loadWithSettingsThenRestore = loadWithSettingsThenRestore;
 module.exports.fetchPackage = fetchPackage;

@@ -26,4 +26,4 @@ exports = module.exports = {
 var addModuleProperty = require('../utils/util').addModuleProperty;
 
 addModuleProperty(module, 'create', './create', true);
-addModuleProperty(module, 'xx', './xx', true);
+addModuleProperty(module, 'platform', './platform', true);

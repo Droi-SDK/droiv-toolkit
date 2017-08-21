@@ -24,7 +24,7 @@ function getSubCommand(args, cmd) {
     'plugin',
     'plugins',
   ];
-  if (subCommands.indexOf(cmd)) {
+  if (subCommands.indexOf(cmd) != -1) {
     return args[3];
   }
   return null;
@@ -44,7 +44,6 @@ function cli(inputArgs) {
   var args = nopt(knownOpts, shortHands, inputArgs);
 
   process.on('uncaughtException', function (err) {
-    console.log('====================================');
     logger.error(err);
     process.exit(1);
   });
@@ -72,18 +71,27 @@ function cli(inputArgs) {
   } else {
     // TODO
     //platform/plugin
-    console.log('====================================');
-    console.log(subcommand);
-    console.log('====================================');
+    subcommand = undashed[1];
+    var targets = undashed.slice(2); // array of targets, either platforms or plugins
+    var cli_vars = {};
+    if (args.variable) {
+      args.variable.forEach(function (s) {
+        // CB-9171
+        var eq = s.indexOf('=');
+        if (eq == -1)
+          throw new Error('invalid variable format: ' + s);
+        var key = s.substr(0, eq).toUpperCase();
+        var val = s.substr(eq + 1, s.length);
+        cli_vars[key] = val;
+      });
+    }
+    return lib.raw[cmd](subcommand, targets, []);
   }
 
   function initTemplate() {
     var cfg; // init config
     var customWww; // Template path
     var wwwCfg; // Template config
-    console.log('====================================');
-    console.log(JSON.stringify(undashed));
-    console.log('====================================');
     // If we got a fourth parameter, consider it to be JSON to init the config.
     if (undashed[4])
       cfg = JSON.parse(undashed[4]);
@@ -143,16 +151,4 @@ function initRequire() {
     );
     process.exit(2);
   }
-}
-
-function ShowObjProperty(Obj) {
-  var PropertyList = '';
-  var PropertyCount = 0;
-  for (i in Obj) {
-    if (Obj.i != null)
-      PropertyList = PropertyList + i + '属性：' + Obj.i + '\r\n';
-    else
-      PropertyList = PropertyList + i + '方法\r\n';
-  }
-  console.log(PropertyList);
 }

@@ -92,7 +92,7 @@ function getLatestNpmVersion(module_name) {
       // result is an object in the form:
       //     {'<version>': {version: '<version>'}}
       // (where <version> is the latest version)
-      
+
       return Object.keys(result)[0];
     });
   });
@@ -168,15 +168,15 @@ function isRootDir(dir) {
   return 0;
 }
 
-function isCordova(dir) {
+function isDroiv(dir) {
   if (!dir) {
     // Prefer PWD over cwd so that symlinked dirs within your PWD work correctly (CB-5687).
     var pwd = process.env.PWD;
     var cwd = process.cwd();
     if (pwd && pwd != cwd && pwd != 'undefined') {
-      return this.isCordova(pwd) || this.isCordova(cwd);
+      return this.isDroiv(pwd) || this.isDroiv(cwd);
     }
-    return this.isCordova(cwd);
+    return this.isDroiv(cwd);
   }
   var bestReturnValueSoFar = false;
   for (var i = 0; i < 1000; ++i) {
@@ -194,12 +194,12 @@ function isCordova(dir) {
     }
     dir = parentDir;
   }
-  console.error('Hit an unhandled case in util.isCordova');
+  console.error('Hit an unhandled case in util.isDroiv');
   return false;
 }
 
 function cdProjectRoot(dir) {
-  var projectRoot = this.isCordova(dir);
+  var projectRoot = this.isDroiv(dir);
   if (!projectRoot) {
     throw new CordovaError('Current working directory is not a weexpack project.');
   }
@@ -242,7 +242,39 @@ function findPlugins(pluginPath) {
   return plugins;
 }
 
-exports.isCordova = isCordova;
+function listPlatforms(project_dir) {
+  var core_platforms = require('../platforms/platforms');
+  var platforms_dir = path.join(project_dir, 'platforms');
+  if (!exports.existsSync(platforms_dir)) {
+    return [];
+  }
+  var subdirs = fs.readdirSync(platforms_dir);
+  return subdirs.filter(function (p) {
+    return Object.keys(core_platforms).indexOf(p) > -1;
+  });
+}
+
+function getInstalledPlatformsWithVersions(project_dir) {
+  var result = {};
+  var platforms_on_fs = listPlatforms(project_dir);
+
+  return Q.all(platforms_on_fs.map(function (p) {
+    var superspawn = require('weexpack-common').superspawn;
+    return superspawn.maybeSpawn(path.join(project_dir, 'platforms', p, 'cordova', 'version'), [], 
+      {
+        chmod: true
+      })
+      .then(function (v) {
+        result[p] = v || null;
+      }, function () {
+        result[p] = 'broken';
+      });
+  })).then(function () {
+    return result;
+  });
+}
+
+exports.isDroiv = isDroiv;
 exports.cdProjectRoot = cdProjectRoot;
 exports.projectConfig = projectConfig;
 exports.findPlugins = findPlugins;
@@ -254,3 +286,4 @@ exports.getAvailableNpmVersions = getAvailableNpmVersions;
 exports.addModuleProperty = addModuleProperty;
 exports.isIOSProject = isIOSProject;
 exports.isAndroidProject = isAndroidProject;
+exports.getInstalledPlatformsWithVersions = getInstalledPlatformsWithVersions;

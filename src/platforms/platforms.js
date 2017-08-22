@@ -12,7 +12,7 @@ function getPlatformApi(platform, platformRootDir) {
 
   // if platformRootDir is not specified, try to detect it first
   if (!platformRootDir) {
-    var projectRootDir = util.isCordova();
+    var projectRootDir = util.isDroiv();
     platformRootDir = projectRootDir && path.join(projectRootDir, 'platforms', platform);
   }
 

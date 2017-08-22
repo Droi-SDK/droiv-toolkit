@@ -61,7 +61,7 @@ function restoreSettings() {
  */
 function fetchPackage(packageName, packageVersion) {
   // Get the latest matching version from NPM if a version range is specified
-  return WeexMarket.info(packageName).then(function (data) {
+  return DroiMarket.info(packageName).then(function (data) {
     //todo Market-Injection
     return util.getLatestMatchingNpmVersion(data.fullname, packageVersion).then(
       function (latestVersion) {
@@ -81,7 +81,7 @@ function cachePackage(packageName, packageVersion) {
   //todo Market-Injection
   // WEEK_HOOK
   if (packageName !== 'droiv-android' && packageName !== 'droiv-ios' && packageName !== 'droiv-vue') {
-    packageName = WeexMarket.info(packageName);
+    packageName = DroiMarket.info(packageName);
   } else {
     packageName = {
       fullname: packageName
@@ -118,10 +118,6 @@ function cachePackage(packageName, packageVersion) {
     );
   });
 }
-
-module.exports.invokeNpm = function () {
-
-};
 
 module.exports.loadWithSettingsThenRestore = loadWithSettingsThenRestore;
 module.exports.fetchPackage = fetchPackage;

@@ -1,4 +1,4 @@
-var cordovaUtil = require('../utils/util'),
+var util = require('../utils/util'),
   events = require('weexpack-common').events,
   Q = require('q'),
   scriptsFinder = require('./scriptsFinder'),
@@ -16,8 +16,8 @@ var isWindows = os.platform().slice(0, 3) === 'win';
  * @constructor
  */
 function HooksRunner(projectRoot) {
-  var root = cordovaUtil.isCordova(projectRoot);
-  if (!root) throw new CordovaError('Not a Cordova project ("' + projectRoot + '"), can\'t use hooks.');
+  var root = util.isDroiv(projectRoot);
+  if (!root) throw new CordovaError('Not a driov project ("' + projectRoot + '"), can\'t use hooks.');
   else this.projectRoot = root;
 }
 
@@ -26,10 +26,6 @@ function HooksRunner(projectRoot) {
  * Returns a promise.
  */
 HooksRunner.prototype.fire = function fire(hook, opts) {
-  if (isHookDisabled(opts, hook)) {
-    return Q('hook ' + hook + ' is disabled.');
-  }
-
   // args check
   if (!hook) {
     throw new Error('hook type is not specified');
@@ -60,11 +56,11 @@ HooksRunner.prototype.prepareOptions = function (opts) {
   opts = opts || {};
   opts.projectRoot = this.projectRoot;
   opts.cordova = opts.cordova || {};
-  opts.cordova.platforms = opts.cordova.platforms || opts.platforms || cordovaUtil.listPlatforms(opts.projectRoot);
+  opts.cordova.platforms = opts.cordova.platforms || opts.platforms || util.listPlatforms(opts.projectRoot);
   opts.cordova.platforms = opts.cordova.platforms.map(function (platform) {
     return platform.split('@')[0];
   });
-  opts.cordova.plugins = opts.cordova.plugins || opts.plugins || cordovaUtil.findPlugins(path.join(opts.projectRoot, 'plugins'));
+  opts.cordova.plugins = opts.cordova.plugins || opts.plugins || util.findPlugins(path.join(opts.projectRoot, 'plugins'));
 
   try {
     opts.cordova.version = opts.cordova.version || require('../../package').version;
@@ -84,10 +80,6 @@ module.exports = HooksRunner;
 module.exports.fire = globalFire;
 
 function globalFire(hook, opts) {
-  if (isHookDisabled(opts, hook)) {
-    return Q('hook ' + hook + ' is disabled.');
-  }
-
   opts = opts || {};
   return executeEventHandlersSerially(hook, opts);
 }
@@ -252,25 +244,4 @@ function extractSheBangInterpreter(fullpath) {
   if (shMatch)
     hookCmd = shMatch[1];
   return hookCmd;
-}
-
-
-/**
- * Checks if the given hook type is disabled at the command line option.
- * @param {Object} opts - the option object that contains command line options
- * @param {String} hook - the hook type
- * @returns {Boolean} return true if the passed hook is disabled.
- */
-function isHookDisabled(opts, hook) {
-  if (opts === undefined || opts.nohooks === undefined) {
-    return false;
-  }
-  var disabledHooks = opts.nohooks;
-  var length = disabledHooks.length;
-  for (var i = 0; i < length; i++) {
-    if (hook.match(disabledHooks[i]) !== null) {
-      return true;
-    }
-  }
-  return false;
 }

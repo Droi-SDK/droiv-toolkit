@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 const program = require('commander');
 const chalk = require('chalk');
 const cli = require('../src/cli');
@@ -28,7 +29,6 @@ if (!projectName || !projectName.match(/^[$A-Z_][0-9A-Z_-]*$/i)) {
 }
 
 cli(args);
-
 
 if (program.args.length < 1) {
   program.help();

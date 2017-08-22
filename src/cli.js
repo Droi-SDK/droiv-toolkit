@@ -63,7 +63,6 @@ function cli(inputArgs) {
     if (!args.help && remain[0] == 'help') {
       remain.shift();
     }
-    //return help(remain);
   }
 
   if (cmd == 'create') {
@@ -123,7 +122,6 @@ function cli(inputArgs) {
       if (args.template) {
         wwwCfg.template = true;
       } else if (args['copy-from']) {
-        // logger.warn('Warning: --copy-from option is being deprecated. Consider using --template instead.');
         wwwCfg.template = true;
       }
 

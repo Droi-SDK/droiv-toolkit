@@ -1,5 +1,4 @@
-var config = require('./config'),
-  cordova_util = require('../utils/util'),
+var util = require('../utils/util'),
   ConfigParser = require('weexpack-common').ConfigParser,
   fs = require('fs'),
   path = require('path'),
@@ -31,7 +30,7 @@ function addHelper(cmd, hooksRunner, projectRoot, targets, opts) {
   var msg;
   if (!targets || !targets.length) {
     msg = 'No platform specified. Please specify a platform to ' + cmd + '. ' +
-      'See `' + cordova_util.binname + ' platform list`.';
+      'See `' + util.binname + ' platform list`.';
     return Q.reject(new CordovaError(msg));
   }
 
@@ -43,12 +42,9 @@ function addHelper(cmd, hooksRunner, projectRoot, targets, opts) {
     }
   }
 
-  var xml = cordova_util.projectConfig(projectRoot);
+  var xml = util.projectConfig(projectRoot);
   var cfg = new ConfigParser(xml);
-  var config_json = config.read(projectRoot);
-  var autosave = config_json.auto_save_platforms || false;
   opts = opts || {};
-  opts.searchpath = opts.searchpath || config_json.plugin_search_path;
 
   // The "platforms" dir is safe to delete, it's almost equivalent to
   // cordova platform rm <list of all platforms>
@@ -68,27 +64,17 @@ function addHelper(cmd, hooksRunner, projectRoot, targets, opts) {
             spec = platform;
             platform = null;
           }
-
-
           if (platform && !spec && cmd == 'add') {
             events.emit('verbose', 'No version supplied. Retrieving version from config.xml...');
             spec = getVersionFromConfigFile(platform, cfg);
           }
-
-          // If --save/autosave on && no version specified, use the pinned version
-          // e.g: 'cordova platform add android --save', 'cordova platform update android --save'
-          if ((opts.save || autosave) && !spec) {
-            spec = platforms[platform].version;
-          }
-
           if (spec) {
-            var maybeDir = cordova_util.fixRelativePath(spec);
-            if (cordova_util.isDirectory(maybeDir)) {
+            var maybeDir = util.fixRelativePath(spec);
+            if (util.isDirectory(maybeDir)) {
               return getPlatformDetailsFromDir(maybeDir, platform);
             }
           }
           return downloadPlatform(projectRoot, platform, spec, opts);
-
         }).then(function (platDetails) {
           platform = platDetails.platform;
           var platformPath = path.join(projectRoot, 'platforms', platform);
@@ -97,7 +83,6 @@ function addHelper(cmd, hooksRunner, projectRoot, targets, opts) {
             if (platformAlreadyAdded) {
               throw new CordovaError('Platform ' + platform + ' already added.');
             }
-
             // Remove the <platform>.json file from the plugins directory, so we start clean (otherwise we
             // can get into trouble not installing plugins if someone deletes the platform folder but
             // <platform>.json still exists).
@@ -106,7 +91,7 @@ function addHelper(cmd, hooksRunner, projectRoot, targets, opts) {
           } else if (cmd == 'update') {
             if (!platformAlreadyAdded) {
               throw new CordovaError('Platform "' + platform + '" is not yet added. See `' +
-                cordova_util.binname + ' platform list`.');
+                util.binname + ' platform list`.');
             }
           }
 
@@ -126,11 +111,6 @@ function addHelper(cmd, hooksRunner, projectRoot, targets, opts) {
             link: opts.link,
             ali: opts.ali
           };
-
-          if (config_json && config_json.lib && config_json.lib[platform] &&
-            config_json.lib[platform].template) {
-            options.customTemplate = config_json.lib[platform].template;
-          }
 
           events.emit('log', (cmd === 'add' ? 'Adding ' : 'Updating ') + platform + ' project@' + platDetails.version + '...');
 
@@ -216,7 +196,7 @@ function getVersionFromConfigFile(platform, cfg) {
 
 function remove(hooksRunner, projectRoot, targets, opts) {
   if (!targets || !targets.length) {
-    return Q.reject(new CordovaError('No platform(s) specified. Please specify platform(s) to remove. See `' + cordova_util.binname + ' platform list`.'));
+    return Q.reject(new CordovaError('No platform(s) specified. Please specify platform(s) to remove. See `' + util.binname + ' platform list`.'));
   }
   return hooksRunner.fire('before_platform_rm', opts)
     .then(function () {
@@ -224,19 +204,6 @@ function remove(hooksRunner, projectRoot, targets, opts) {
         shell.rm('-rf', path.join(projectRoot, 'platforms', target));
         removePlatformPluginsJson(projectRoot, target);
       });
-    }).then(function () {
-      var config_json = config.read(projectRoot);
-      var autosave = config_json.auto_save_platforms || false;
-      if (opts.save || autosave) {
-        targets.forEach(function (target) {
-          var platformName = target.split('@')[0];
-          var xml = cordova_util.projectConfig(projectRoot);
-          var cfg = new ConfigParser(xml);
-          events.emit('log', 'Removing platform ' + target + ' from config.xml file...');
-          cfg.removeEngine(platformName);
-          cfg.write();
-        });
-      }
     }).then(function () {
       // Remove targets from platforms.json
       targets.forEach(function (target) {
@@ -264,7 +231,7 @@ function addDeprecatedInformationToPlatforms(platformsList) {
 function list(hooksRunner, projectRoot, opts) {
   return hooksRunner.fire('before_platform_ls', opts)
     .then(function () {
-      return cordova_util.getInstalledPlatformsWithVersions(projectRoot);
+      return util.getInstalledPlatformsWithVersions(projectRoot);
     }).then(function (platformMap) {
       var platformsText = [];
       for (var plat in platformMap) {
@@ -301,7 +268,7 @@ function platform(command, targets, opts) {
   return Q().then(function () {
     var msg;
     //for test
-    var projectRoot = cordova_util.cdProjectRoot();
+    var projectRoot = util.cdProjectRoot();
     var hooksRunner = new HooksRunner(projectRoot);
 
     if (arguments.length === 0) command = 'ls';
@@ -330,7 +297,7 @@ function platform(command, targets, opts) {
           // Neither path, git-url nor platform name - throw.
           msg = 'Platform "' + t +
             '" not recognized as a core weexpack platform. See `' +
-            cordova_util.binname + ' platform list`.';
+            util.binname + ' platform list`.';
         }
         throw new CordovaError(msg);
       });

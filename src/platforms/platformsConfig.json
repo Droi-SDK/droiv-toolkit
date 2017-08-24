@@ -9,9 +9,9 @@
     "hostos": ["darwin"],
     "parser_file": "../cordova/metadata/ios_parser",
     "handler_file": "../plugman/platforms/ios",
-    "url": "https://github.com/weexteam/weexpack-iOS.git?",
+    "url": "https://github.com/Droi-SDK/droiv-ios.git?",
     "version": "^4.0.5",
-    "apiCompatibleSince": "4.0.",
+    "apiCompatibleSince": "~0.0.1",
     "deprecated": false
 
   },
@@ -19,9 +19,9 @@
   "android": {
     "parser_file": "../cordova/metadata/android_parser",
     "handler_file": "../plugman/platforms/android",
-    "url": "https://github.com/weexteam/app-framework-android.git?",
+    "url": "https://github.com/Droi-SDK/droiv-android.git?",
     "version": "^6.2.1",
-    "apiCompatibleSince": "5.0.0",
+    "apiCompatibleSince": "~0.0.1",
     "deprecated": false
   },
   "browser": {}

@@ -44,6 +44,7 @@ function cli(inputArgs) {
   var args = nopt(knownOpts, shortHands, inputArgs);
 
   process.on('uncaughtException', function (err) {
+    console.log(err);
     logger.error(err);
     process.exit(1);
   });

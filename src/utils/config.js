@@ -126,7 +126,7 @@ const replacer = {
 exports.Config = Config;
 exports.ConfigResolver = ConfigResolver;
 exports.androidConfigResolver = new ConfigResolver({
-  'build.gradle': {
+  'app/build.gradle': {
     AppId: {
       type: 'regexp',
       key: /(applicationId ")[^"]*(")/g

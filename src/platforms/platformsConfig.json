@@ -1,7 +1,7 @@
 {
   "vue": {
     "version": "~0.0.1",
-    "apiCompatibleSince": "5.0.0",
+    "apiCompatibleSince": "~0.0.1",
     "deprecated": false
   },
 
@@ -10,17 +10,16 @@
     "parser_file": "../cordova/metadata/ios_parser",
     "handler_file": "../plugman/platforms/ios",
     "url": "https://github.com/Droi-SDK/droiv-ios.git?",
-    "version": "^4.0.5",
+    "version": "~0.0.1",
     "apiCompatibleSince": "~0.0.1",
     "deprecated": false
-
   },
 
   "android": {
     "parser_file": "../cordova/metadata/android_parser",
     "handler_file": "../plugman/platforms/android",
     "url": "https://github.com/Droi-SDK/droiv-android.git?",
-    "version": "^6.2.1",
+    "version": "~0.0.1",
     "apiCompatibleSince": "~0.0.1",
     "deprecated": false
   },

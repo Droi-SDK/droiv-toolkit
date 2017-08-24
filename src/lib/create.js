@@ -43,8 +43,6 @@ function initT(dir, optionalId, optionalName, cfg, extEvents) {
 
         if (optionalId) cfg.id = optionalId;
         if (optionalName) cfg.name = optionalName;
-
-        // Make absolute.
         dir = path.resolve(dir);
 
         var sanedircontents = function (d) {
@@ -79,7 +77,7 @@ function initT(dir, optionalId, optionalName, cfg, extEvents) {
         cfg.lib.www.id = cfg.lib.www.id || 'dummy_id';
         var rel_path = path.relative(cfg.lib.www.url, dir);
         var goes_up = rel_path.split(path.sep)[0] == '..';
-
+        
         if (!(goes_up || rel_path[1] == ':')) {
           throw new CordovaError(
             'Project dir "' + dir +
@@ -89,19 +87,10 @@ function initT(dir, optionalId, optionalName, cfg, extEvents) {
         }
       })
     .then(function () {
-      events.emit('log', 'Creating a new droiv project.');
-      var cfgToPersistToDisk = JSON.parse(JSON.stringify(cfg));
-      delete cfgToPersistToDisk.lib.www;
-      if (Object.keys(cfgToPersistToDisk.lib).length === 0) {
-        delete cfgToPersistToDisk.lib;
-      }
-      cfg.lib.www.url = path.resolve(cfg.lib.www.url);
-      return Q(cfg.lib.www.url);
-    }).then(function () {
       var projectRoot = dir;
       var opts = opts || {};
       opts.platforms = target;
-      //process.chdir(projectRoot);
+      events.emit('log', 'Download template.');
       return downloadVueTemplate(projectRoot, target, opts);
     });
 }
@@ -112,8 +101,11 @@ function downloadVueTemplate(projectRoot, target, opts) {
   }).then(function (libDir) {
     return platform.getPlatformDetailsFromDir(libDir, target);
   }).then(function (platDetails) {
+    events.emit('log', 'Creating a new droiv project.');
     platform = platDetails.platform;
     var destination = path.resolve(projectRoot);
+    if (!fs.existsSync(destination))
+      shell.mkdir(destination);
     var templatePath = path.join(platDetails.libDir, 'bin', 'templates');
     return Q().then(function () {
       copyTemplateFiles(templatePath, destination);
@@ -124,9 +116,6 @@ function downloadVueTemplate(projectRoot, target, opts) {
 function copyTemplateFiles(templateDir, projectDir) {
   var templateFiles; // Current file
   templateFiles = fs.readdirSync(templateDir);
-  // Remove directories, and files that are unwanted
-
-  // Copy each template file after filter
   for (var i = 0; i < templateFiles.length; i++) {
     var p = path.resolve(templateDir, templateFiles[i]);
     shell.cp('-R', p, projectDir);

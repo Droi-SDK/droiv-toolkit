@@ -138,9 +138,9 @@ const utils = {
         process.exit(1);
       }
       if (os.release() >= '15.0.0') {
-        args = ' --unsafe-perm=true --allow-root'
+        args = ' --unsafe-perm=true --allow-root';
       }
-      return this.exec(__dirname + '/installIosDeploy.sh' + args)
+      return this.exec(__dirname + '/installIosDeploy.sh' + args);
     } else {
       return Promise.resolve();
     }

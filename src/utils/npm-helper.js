@@ -79,8 +79,8 @@ function fetchPackage(packageName, packageVersion) {
  */
 function cachePackage(packageName, packageVersion) {
   //todo Market-Injection
-  // WEEK_HOOK
-  if (packageName !== 'droiv-android' && packageName !== 'droiv-ios' && packageName !== 'droiv-vue') {
+  var prefix = 'droiv-';
+  if (packageName !== prefix + 'android' && packageName !== prefix + 'ios' && packageName !== prefix + 'vue') {
     packageName = DroiMarket.info(packageName);
   } else {
     packageName = {

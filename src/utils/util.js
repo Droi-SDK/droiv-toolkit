@@ -221,11 +221,8 @@ function _resetOrigCwd() {
 
 function projectConfig(projectDir) {
   var rootPath = path.join(projectDir, 'config.xml');
-  var wwwPath = path.join(projectDir, 'www', 'config.xml');
   if (exports.existsSync(rootPath)) {
     return rootPath;
-  } else if (exports.existsSync(wwwPath)) {
-    return wwwPath;
   }
   return false;
 }

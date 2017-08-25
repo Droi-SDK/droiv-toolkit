@@ -17,92 +17,52 @@ function setupEvents(externalEventEmitter) {
   return events;
 }
 
-module.exports = function (dir, optionalId, optionalName, cfg, extEvents) {
-  if (extEvents) {
-    return initT(dir, optionalId, optionalName, cfg, extEvents);
-  } else {
-    return initT(dir, optionalId, optionalName, cfg, events);
-  }
-};
+module.exports = create;
 
-function initT(dir, optionalId, optionalName, cfg, extEvents) {
+function create(dir, extEvents) {
+  if (extEvents) {
+    return setupAndCheck(dir, extEvents);
+  } else {
+    return setupAndCheck(dir, events);
+  }
+}
+
+function setupAndCheck(dir, extEvents) {
   var target = 'vue';
   return Q.fcall(
-      function () {
-        events = setupEvents(extEvents);
-        if (!dir) {
-          throw new CordovaError('Directory not specified. See `droiv --help`.');
-        }
-        var finalConfig = {};
-        cfg = finalConfig;
-        if (!cfg) {
-          throw new CordovaError('Must provide a project configuration.');
-        } else if (typeof cfg == 'string') {
-          cfg = JSON.parse(cfg);
-        }
-
-        if (optionalId) cfg.id = optionalId;
-        if (optionalName) cfg.name = optionalName;
-        dir = path.resolve(dir);
-
-        var sanedircontents = function (d) {
-          var contents = fs.readdirSync(d);
-          if (contents.length === 0) {
+    function () {
+      events = setupEvents(extEvents);
+      if (!dir) {
+        throw new CordovaError('Directory not specified. See `droiv --help`.');
+      }
+      dir = path.resolve(dir);
+      var sanedircontents = function (dir) {
+        var contents = fs.readdirSync(dir);
+        if (contents.length === 0) {
+          return true;
+        } else if (contents.length == 1) {
+          if (contents[0] == '.cordova') {
             return true;
-          } else if (contents.length == 1) {
-            if (contents[0] == '.cordova') {
-              return true;
-            }
           }
-          return false;
-        };
-
-        if (fs.existsSync(dir) && !sanedircontents(dir)) {
-          throw new CordovaError('Path already exists and is not empty: ' + dir);
         }
+        return false;
+      };
 
-        // if (cfg.id && !validateIdentifier(cfg.id)) {
-        //   throw new CordovaError('App id contains a reserved word, or is not a valid identifier.');
-        // }
-
-        // This was changed from "uri" to "url", but checking uri for backwards compatibility.
-        cfg.lib = cfg.lib || {};
-        cfg.lib.www = cfg.lib.www || {};
-        cfg.lib.www.url = cfg.lib.www.url || cfg.lib.www.uri;
-
-        if (!cfg.lib.www.url) {
-          cfg.lib.www.url = path.join(__dirname, 'templates');
-        }
-        cfg.lib.www.version = cfg.lib.www.version || 'not_versioned';
-        cfg.lib.www.id = cfg.lib.www.id || 'dummy_id';
-        var rel_path = path.relative(cfg.lib.www.url, dir);
-        var goes_up = rel_path.split(path.sep)[0] == '..';
-        
-        if (!(goes_up || rel_path[1] == ':')) {
-          throw new CordovaError(
-            'Project dir "' + dir +
-            '" must not be created at/inside the template used to create the project "' +
-            cfg.lib.www.url + '".'
-          );
-        }
-      })
-    .then(function () {
-      var projectRoot = dir;
-      var opts = opts || {};
-      opts.platforms = target;
+      if (fs.existsSync(dir) && !sanedircontents(dir)) {
+        throw new CordovaError('Path already exists and is not empty: ' + dir);
+      }
       events.emit('log', 'Download template.');
-      return downloadVueTemplate(projectRoot, target, opts);
+      return downloadVueTemplate(dir, target);
     });
 }
 
-function downloadVueTemplate(projectRoot, target, opts) {
+function downloadVueTemplate(projectRoot, target) {
   return Q().then(function () {
-    return lazy_load.based_on_config(projectRoot, target, opts);
+    return lazy_load.based_on_config(projectRoot, target);
   }).then(function (libDir) {
     return platform.getPlatformDetailsFromDir(libDir, target);
   }).then(function (platDetails) {
     events.emit('log', 'Creating a new droiv project.');
-    platform = platDetails.platform;
     var destination = path.resolve(projectRoot);
     if (!fs.existsSync(destination))
       shell.mkdir(destination);
@@ -114,7 +74,7 @@ function downloadVueTemplate(projectRoot, target, opts) {
 }
 
 function copyTemplateFiles(templateDir, projectDir) {
-  var templateFiles; // Current file
+  var templateFiles;
   templateFiles = fs.readdirSync(templateDir);
   for (var i = 0; i < templateFiles.length; i++) {
     var p = path.resolve(templateDir, templateFiles[i]);

@@ -1,4 +1,4 @@
-const child_process = require('child_process')
+const child_process = require('child_process');
 
 /**
  * Start js bundle server

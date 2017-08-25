@@ -22,7 +22,8 @@ function Platform(platformString) {
   platform = _.extend({}, platforms[name]);
   this.name = name;
   this.version = version || platform.version;
-  this.packageName = 'droiv-' + name;
+  var prefix = 'droiv-';
+  this.packageName = prefix + name;
 }
 
 function based_on_config(project_root, platform) {

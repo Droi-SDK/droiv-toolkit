@@ -127,6 +127,7 @@ function findIOSDevice({
       reject(e);
     }
     let devicesList = utils.parseIOSDevicesList(deviceInfo);
+
     resolve({
       devicesList,
       xcodeProject,
@@ -243,11 +244,10 @@ function _buildOnSimulator({
   reject
 }) {
   console.log('project is building ...');
-  let buildInfo = '';
   try {
     let config = require(path.join(rootPath, 'ios.config.json'));
     fs.writeFileSync(path.join(process.cwd(), 'bundlejs/index.js'), fs.readFileSync(path.join(process.cwd(), '../../dist', config.WeexBundle.replace(/\.(we|vue)$/, '.js'))));
-    buildInfo = child_process.execSync(`xcodebuild -${xcodeProject.isWorkspace ? 'workspace' : 'project'} ${xcodeProject.name} -scheme ${scheme} -configuration Debug -destination id=${device.udid} -sdk iphonesimulator -derivedDataPath build clean build`, {
+    child_process.execSync(`xcodebuild -${xcodeProject.isWorkspace ? 'workspace' : 'project'} ${xcodeProject.name} -scheme ${scheme} -configuration Debug -destination id=${device.udid} -sdk iphonesimulator -derivedDataPath build clean build`, {
       encoding: 'utf8'
     });
   } catch (e) {

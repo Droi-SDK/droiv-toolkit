@@ -1,8 +1,6 @@
 var util = require('../utils/util'),
-  ConfigParser = require('weexpack-common').ConfigParser,
   fs = require('fs'),
   path = require('path'),
-  HooksRunner = require('../hooks/HooksRunner'),
   events = require('weexpack-common').events,
   lazy_load = require('./lazy_load'),
   CordovaError = require('weexpack-common').CordovaError,
@@ -18,19 +16,19 @@ for (var p in platforms) {
   module.exports[p] = platforms[p];
 }
 
-function update(hooksRunner, projectRoot, targets, opts) {
-  return addHelper('update', hooksRunner, projectRoot, targets, opts);
+function update(projectRoot, targets) {
+  return addHelper('update', projectRoot, targets);
 }
 
-function add(hooksRunner, projectRoot, targets, opts) {
-  return addHelper('add', hooksRunner, projectRoot, targets, opts);
+function add(projectRoot, targets) {
+  return addHelper('add', projectRoot, targets);
 }
 
-function addHelper(cmd, hooksRunner, projectRoot, targets, opts) {
+function addHelper(cmd, projectRoot, targets) {
   var msg;
   if (!targets || !targets.length) {
     msg = 'No platform specified. Please specify a platform to ' + cmd + '. ' +
-      'See `' + util.binname + ' platform list`.';
+      'See `' + 'droiv' + ' platform list`.';
     return Q.reject(new CordovaError(msg));
   }
 
@@ -42,101 +40,86 @@ function addHelper(cmd, hooksRunner, projectRoot, targets, opts) {
     }
   }
 
-  var xml = util.projectConfig(projectRoot);
-  var cfg = new ConfigParser(xml);
-  opts = opts || {};
-
-  // The "platforms" dir is safe to delete, it's almost equivalent to
-  // cordova platform rm <list of all platforms>
   var platformsDir = path.join(projectRoot, 'platforms');
   shell.mkdir('-p', platformsDir);
 
-  return hooksRunner.fire('before_platform_' + cmd, opts)
-    .then(function () {
-      return promiseutil.Q_chainmap(targets, function (target) {
-        // For each platform, download it and call its helper script.
-        var parts = target.split('@');
-        var platform = parts[0];
-        var spec = parts[1];
+  return Q().then(function () {
+    return promiseutil.Q_chainmap(targets, function (target) {
+      // For each platform, download it and call its helper script.
+      var parts = target.split('@');
+      var platform = parts[0];
+      var spec = parts[1];
 
-        return Q.when().then(function () {
-          if (!(platform in platforms)) {
-            spec = platform;
-            platform = null;
+      return Q.when().then(function () {
+        return downloadPlatform(projectRoot, platform, spec);
+      }).then(function (platDetails) {
+        platform = platDetails.platform;
+        var platformPath = path.join(projectRoot, 'platforms', platform);
+        var platformAlreadyAdded = fs.existsSync(platformPath);
+        if (cmd == 'add') {
+          if (platformAlreadyAdded) {
+            throw new CordovaError('Platform ' + platform + ' already added.');
           }
-          if (platform && !spec && cmd == 'add') {
-            events.emit('verbose', 'No version supplied. Retrieving version from config.xml...');
-            spec = getVersionFromConfigFile(platform, cfg);
+        } else if (cmd == 'update') {
+          if (!platformAlreadyAdded) {
+            throw new CordovaError('Platform "' + platform + '" is not yet added. See `' +
+              util.binname + ' platform list`.');
           }
-          if (spec) {
-            var maybeDir = util.fixRelativePath(spec);
-            if (util.isDirectory(maybeDir)) {
-              return getPlatformDetailsFromDir(maybeDir, platform);
-            }
-          }
-          return downloadPlatform(projectRoot, platform, spec, opts);
-        }).then(function (platDetails) {
-          platform = platDetails.platform;
-          var platformPath = path.join(projectRoot, 'platforms', platform);
-          var platformAlreadyAdded = fs.existsSync(platformPath);
-          if (cmd == 'add') {
-            if (platformAlreadyAdded) {
-              throw new CordovaError('Platform ' + platform + ' already added.');
-            }
-            // Remove the <platform>.json file from the plugins directory, so we start clean (otherwise we
-            // can get into trouble not installing plugins if someone deletes the platform folder but
-            // <platform>.json still exists).
-            //WEEX_HOOK
-            //removePlatformPluginsJson(projectRoot, target);
-          } else if (cmd == 'update') {
-            if (!platformAlreadyAdded) {
-              throw new CordovaError('Platform "' + platform + '" is not yet added. See `' +
-                util.binname + ' platform list`.');
-            }
-          }
+        }
 
-          if (/-nightly|-dev$/.exec(platDetails.version)) {
-            msg = 'Warning: using prerelease platform ' + platform +
-              '@' + platDetails.version +
-              '.\nUse \'weexpack platform add ' +
-              platform + '@latest\' to add the latest published version instead.';
-            events.emit('warn', msg);
-          }
+        if (/-nightly|-dev$/.exec(platDetails.version)) {
+          msg = 'Warning: using prerelease platform ' + platform +
+            '@' + platDetails.version +
+            '.\nUse \'weexpack platform add ' +
+            platform + '@latest\' to add the latest published version instead.';
+          events.emit('warn', msg);
+        }
 
-          var options = {
-            // We need to pass a platformDetails into update/create
-            // since PlatformApiPoly needs to know something about
-            // platform, it is going to create.
-            platformDetails: platDetails,
-            link: opts.link,
-            ali: opts.ali
-          };
+        var options = {
+          platformDetails: platDetails,
+        };
 
-          events.emit('log', (cmd === 'add' ? 'Adding ' : 'Updating ') + platform + ' project@' + platDetails.version + '...');
+        events.emit('log', (cmd === 'add' ? 'Adding ' : 'Updating ') + platform + ' project@' + platDetails.version + '...');
 
-          var PlatformApi = require('../platforms/PlatformApiPoly');
-
-          var destination = path.resolve(projectRoot, 'platforms', platform);
-          var promise;
-          if (cmd === 'add') {
-            promise = PlatformApi.createPlatform(destination, cfg, options, events);
-          } else {
-            promise = PlatformApi.updatePlatform(destination, options, events);
-          }
-          return promise;
-        });
+        var destination = path.resolve(projectRoot, 'platforms', platform);
+        var promise;
+        if (cmd === 'add') {
+          promise = createPlatform(destination, options);
+        } else {
+          //promise = updatePlatform(destination, options);
+        }
+        return promise;
       });
-    }).then(function () {
-      return hooksRunner.fire('after_platform_' + cmd, opts);
     });
+  });
 }
 
-// Downloads via npm or via git clone (tries both)
-// Returns a Promise
-function downloadPlatform(projectRoot, platform, version, opts) {
+function createPlatform(destinationDir, options) {
+  if (!options || !options.platformDetails)
+    return Q.reject(new CordovaError('Failed to find platform\'s \'create\' script. ' +
+      'Either \'options\' parameter or \'platformDetails\' option is missing'));
+
+  var templatePath = path.join(options.platformDetails.libDir, 'bin', 'templates');
+  return Q().then(function () {
+    copyPlatform(templatePath, destinationDir);
+  });
+}
+
+function copyPlatform(templateDir, projectDir) {
+  var templateFiles;
+  templateFiles = fs.readdirSync(templateDir);
+  // Copy each template file after filter
+  for (var i = 0; i < templateFiles.length; i++) {
+    var p = path.resolve(templateDir, templateFiles[i]);
+    shell.cp('-R', p, projectDir);
+  }
+}
+
+// Downloads via npm, Returns a Promise
+function downloadPlatform(projectRoot, platform, version) {
   var target = version ? (platform + '@' + version) : platform;
   return Q().then(function () {
-    return lazy_load.based_on_config(projectRoot, target, opts);
+    return lazy_load.based_on_config(projectRoot, target);
   }).fail(function (error) {
     var message = 'Failed to fetch platform ' + target +
       '\nProbably this is either a connection problem, or platform spec is incorrect.' +
@@ -153,8 +136,7 @@ function platformFromName(name) {
   return platMatch && platMatch[1];
 }
 
-// Returns a Promise
-// Gets platform details from a directory
+// Returns a Promise, Gets platform details from a directory
 function getPlatformDetailsFromDir(dir, platformIfKnown) {
   var libDir = path.resolve(dir);
   var platform;
@@ -181,40 +163,24 @@ function getPlatformDetailsFromDir(dir, platformIfKnown) {
   });
 }
 
-function getVersionFromConfigFile(platform, cfg) {
-  if (!platform || (!(platform in platforms))) {
-    throw new CordovaError('Invalid platform: ' + platform);
-  }
-
-  // Get appropriate version from config.xml
-  var engine = _.find(cfg.getEngines(), function (eng) {
-    return eng.name.toLowerCase() === platform.toLowerCase();
-  });
-
-  return engine && engine.spec;
-}
-
-function remove(hooksRunner, projectRoot, targets, opts) {
+function remove(projectRoot, targets) {
   if (!targets || !targets.length) {
     return Q.reject(new CordovaError('No platform(s) specified. Please specify platform(s) to remove. See `' + util.binname + ' platform list`.'));
   }
-  return hooksRunner.fire('before_platform_rm', opts)
-    .then(function () {
-      targets.forEach(function (target) {
-        shell.rm('-rf', path.join(projectRoot, 'platforms', target));
-        removePlatformPluginsJson(projectRoot, target);
-      });
-    }).then(function () {
-      // Remove targets from platforms.json
-      targets.forEach(function (target) {
-        events.emit('verbose', 'Removing platform ' + target + ' from platforms.json file...');
-        platformMetadata.remove(projectRoot, target);
-      });
-    }).then(function () {
-      events.emit('log', 'Remove platform ' + targets + ' success');
-      return hooksRunner.fire('after_platform_rm', opts);
-
+  Q().then(function () {
+    targets.forEach(function (target) {
+      shell.rm('-rf', path.join(projectRoot, 'platforms', target));
+      removePlatformPluginsJson(projectRoot, target);
     });
+  }).then(function () {
+    // Remove targets from platforms.json
+    targets.forEach(function (target) {
+      events.emit('verbose', 'Removing platform ' + target + ' from platforms.json file...');
+      platformMetadata.remove(projectRoot, target);
+    });
+  }).then(function () {
+    events.emit('log', 'Remove platform ' + targets + ' success');
+  });
 }
 
 function addDeprecatedInformationToPlatforms(platformsList) {
@@ -228,76 +194,59 @@ function addDeprecatedInformationToPlatforms(platformsList) {
   return platformsList;
 }
 
-function list(hooksRunner, projectRoot, opts) {
-  return hooksRunner.fire('before_platform_ls', opts)
-    .then(function () {
-      return util.getInstalledPlatformsWithVersions(projectRoot);
-    }).then(function (platformMap) {
-      var platformsText = [];
-      for (var plat in platformMap) {
-        platformsText.push(platformMap[plat] ? plat + ' ' + platformMap[plat] : plat);
-      }
+function list(projectRoot) {
+  Q().then(function () {
+    return util.getInstalledPlatformsWithVersions(projectRoot);
+  }).then(function (platformMap) {
+    var platformsText = [];
+    for (var plat in platformMap) {
+      platformsText.push(platformMap[plat] ? plat + ' ' + platformMap[plat] : plat);
+    }
 
-      platformsText = addDeprecatedInformationToPlatforms(platformsText);
-      var results = 'Installed platforms:\n  ' + platformsText.sort().join('\n  ') + '\n';
-      var available = Object.keys(platforms).filter(hostSupports);
+    platformsText = addDeprecatedInformationToPlatforms(platformsText);
+    var results = 'Installed platforms:\n  ' + platformsText.sort().join('\n  ') + '\n';
+    var available = Object.keys(platforms).filter(hostSupports);
 
-      available = available.filter(function (p) {
-        return !platformMap[p]; // Only those not already installed.
-      });
-
-      available = available.map(function (p) {
-        return p.concat(' ', platforms[p].version);
-      });
-
-      available = addDeprecatedInformationToPlatforms(available);
-      results += 'Available platforms: \n  ' + available.sort().join('\n  ');
-
-      events.emit('results', results);
-    }).then(function () {
-      return hooksRunner.fire('after_platform_ls', opts);
+    available = available.filter(function (p) {
+      return !platformMap[p]; // Only those not already installed.
     });
+
+    available = available.map(function (p) {
+      return p.concat(' ', platforms[p].version);
+    });
+
+    available = addDeprecatedInformationToPlatforms(available);
+    results += 'Available platforms: \n  ' + available.sort().join('\n  ');
+
+    events.emit('results', results);
+  });
 }
 
 // Returns a promise.
 module.exports = platform;
 
-function platform(command, targets, opts) {
-  // CB-10519 wrap function code into promise so throwing error
-  // would result in promise rejection instead of uncaught exception
+function platform(command, targets) {
   return Q().then(function () {
     var msg;
-    //for test
     var projectRoot = util.cdProjectRoot();
-    var hooksRunner = new HooksRunner(projectRoot);
 
-    if (arguments.length === 0) command = 'ls';
+    if (arguments.length === 0) command = 'list';
 
-    // Verify that targets look like platforms. Examples:
-    // - android
-    // - android@3.5.0
-    // - ../path/to/dir/with/platform/files
-    // - https://github.com/apache/cordova-android.git
     if (targets) {
       if (!(targets instanceof Array)) targets = [targets];
-      targets.forEach(function (t) {
-        // Trim the @version part if it's there.
-        var p = t.split('@')[0];
-        // OK if it's one of known platform names.
+      targets.forEach(function (target) {
+        var p = target.split('@')[0];
         if (p in platforms) return;
-        // Not a known platform name, check if its a real path.
-        var pPath = path.resolve(t);
+        var pPath = path.resolve(target);
         if (fs.existsSync(pPath)) return;
 
         var msg;
-        // If target looks like a url, we will try cloning it with git
-        if (/[~:/\\.]/.test(t)) {
+        if (/[~:/\\.]/.test(target)) {
           return;
         } else {
-          // Neither path, git-url nor platform name - throw.
-          msg = 'Platform "' + t +
+          msg = 'Platform "' + target +
             '" not recognized as a core weexpack platform. See `' +
-            util.binname + ' platform list`.';
+            'droiv' + ' platform list`.';
         }
         throw new CordovaError(msg);
       });
@@ -306,20 +255,17 @@ function platform(command, targets, opts) {
       return Q.reject(new CordovaError(msg));
     }
 
-    opts = opts || {};
-    opts.platforms = targets;
-
     switch (command) {
     case 'add':
-      return add(hooksRunner, projectRoot, targets, opts);
+      return add(projectRoot, targets);
     case 'rm':
     case 'remove':
-      return remove(hooksRunner, projectRoot, targets, opts);
+      return remove(projectRoot, targets);
     case 'update':
     case 'up':
-      return update(hooksRunner, projectRoot, targets, opts);
+      return update(projectRoot, targets);
     default:
-      return list(hooksRunner, projectRoot, opts);
+      return list(projectRoot);
     }
   });
 }

@@ -10,6 +10,7 @@ const {
   Config,
   androidConfigResolver
 } = require('../utils/config');
+
 /**
  * Build and run Android app on a connected emulator or device
  * @param {Object} options
@@ -199,7 +200,7 @@ function reverseDevice({
 }) {
   return new Promise((resolve) => {
     try {
-      let s = child_process.execSync(`adb -s ${device} reverse tcp:8080 tcp:8080`, {
+      child_process.execSync(`adb -s ${device} reverse tcp:8080 tcp:8080`, {
         encoding: 'utf8'
       });
     } catch (e) {
@@ -289,8 +290,6 @@ function runApp({
       'app/src/main/AndroidManifest.xml',
       'utf8'
     ).match(/package="(.+?)"/)[1];
-
-
     try {
       child_process.execSync(`adb -s ${device} shell am start -n ${packageName}/.SplashActivity`, {
         encoding: 'utf8'
@@ -298,7 +297,7 @@ function runApp({
     } catch (e) {
       reject(e);
     }
-
+    
     resolve();
   });
 }

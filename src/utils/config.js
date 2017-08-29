@@ -35,6 +35,7 @@ class Config {
       try {
         config = require(this.path);
       } catch (e) {
+        console.log(e);
       }
       var questions = [],
         answers = {};
@@ -185,15 +186,12 @@ exports.iOSConfigResolver = new ConfigResolver({
       type: 'plist',
       key: 'CODE_SIGN_IDENTITY(\\[sdk=iphoneos\\*])?'
     }],
-    Profile: [
-      {
-        type: 'regexp',
-        key: /(PROVISIONING_PROFILE\s*=\s*")[^"]*?(")/g
-      },
-      {
-        type: 'plist',
-        key: 'PROVISIONING_PROFILE'
-      }
-    ]
+    Profile: [{
+      type: 'regexp',
+      key: /(PROVISIONING_PROFILE\s*=\s*")[^"]*?(")/g
+    }, {
+      type: 'plist',
+      key: 'PROVISIONING_PROFILE'
+    }]
   }
 });

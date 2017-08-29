@@ -256,16 +256,16 @@ function platform(command, targets) {
     }
 
     switch (command) {
-    case 'add':
-      return add(projectRoot, targets);
-    case 'rm':
-    case 'remove':
-      return remove(projectRoot, targets);
-    case 'update':
-    case 'up':
-      return update(projectRoot, targets);
-    default:
-      return list(projectRoot);
+      case 'add':
+        return add(projectRoot, targets);
+      case 'rm':
+      case 'remove':
+        return remove(projectRoot, targets);
+      case 'update':
+      case 'up':
+        return update(projectRoot, targets);
+      default:
+        return list(projectRoot);
     }
   });
 }

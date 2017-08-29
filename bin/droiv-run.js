@@ -41,15 +41,15 @@ function isValidPlatform(args) {
  */
 function run(platform, options) {
   switch (platform) {
-  case 'android':
-    runAndroid(options);
-    break;
-  case 'ios':
-    runIOS(options);
-    break;
-  case 'web':
-    //runWeb(options);
-    break;
+    case 'android':
+      runAndroid(options);
+      break;
+    case 'ios':
+      runIOS(options);
+      break;
+    case 'web':
+      //runWeb(options);
+      break;
   }
 }
 

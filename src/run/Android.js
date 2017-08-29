@@ -164,13 +164,13 @@ function chooseDevice({
         });
       }
 
-      inquirer.prompt([
-        {
-          type: 'list',
-          message: 'Choose one of the following devices',
-          name: 'chooseDevice',
-          choices: listNames
-        }])
+      inquirer.prompt(
+          [{
+            type: 'list',
+            message: 'Choose one of the following devices',
+            name: 'chooseDevice',
+            choices: listNames
+          }])
         .then((answers) => {
           const device = answers.chooseDevice;
           resolve({
@@ -297,7 +297,7 @@ function runApp({
     } catch (e) {
       reject(e);
     }
-    
+
     resolve();
   });
 }

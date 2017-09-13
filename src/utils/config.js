@@ -119,6 +119,10 @@ const replacer = {
   },
   regexp(source, regexp, value) {
     return source.replace(regexp, function (m, a, b) {
+      console.log(value);
+      console.log(m);
+      console.log(a);
+      console.log(b);
       return a + value + (b || '');
     });
   }
@@ -131,7 +135,15 @@ exports.androidConfigResolver = new ConfigResolver({
     AppId: {
       type: 'regexp',
       key: /(applicationId ")[^"]*(")/g
-    }
+    },
+    VersionName: {
+      type: 'regexp',
+      key: /(versionName ")[^"]*(")/g
+    },
+    VersionCode: {
+      type: 'regexp',
+      key: /(versionCode )[0-9]+(\s)/g
+    },
   },
   'app/src/main/res/values/strings.xml': {
     AppName: {

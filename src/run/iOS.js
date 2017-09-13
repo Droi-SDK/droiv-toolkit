@@ -25,8 +25,10 @@ function runIOS(options) {
       return {
         options
       };
-    }).then(prepareIOS)
+    })
+    .then(prepareIOS)
     .then(installDep)
+    .then(resolveConfig)
     .then(findIOSDevice)
     .then(chooseDevice)
     .then(buildApp)
@@ -104,6 +106,17 @@ function installDep({
     options,
     rootPath
   }));
+}
+
+function resolveConfig({
+  rootPath
+}) {
+  let iOSConfig = new Config(iOSConfigResolver, path.join(rootPath, 'ios.config.json'));
+  return iOSConfig.getConfig().then((config) => {
+    iOSConfigResolver.resolve(config);
+    fs.writeFileSync(path.join(process.cwd(), 'bundlejs/index.js'), fs.readFileSync(path.join(process.cwd(), '../../dist', config.WeexBundle.replace(/\.we$/, '.js'))));
+    return {};
+  });
 }
 
 /**

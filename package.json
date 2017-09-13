@@ -1,6 +1,7 @@
 {
   "name": "droiv-toolkit",
-  "version": "0.0.2",
+  "version": "0.0.3",
+  "description": "droiv-toolkit release",
   "contributors": [
     "Marek Chen <c491843272@gmail.com>"
   ],

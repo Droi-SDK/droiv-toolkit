@@ -39,7 +39,6 @@ function runAndroid(options) {
     .then(findAndroidDevice)
     .then(chooseDevice)
     .then(reverseDevice)
-
     .then(buildApp)
     .then(installApp)
     .then(runApp)

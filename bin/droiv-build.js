@@ -4,7 +4,7 @@ const program = require('commander');
 const chalk = require('chalk');
 const buildAndroid = require('../src/build/Android');
 const buildIOS = require('../src/build/iOS');
-const buildWeb = require('../src/build/Web');
+//const buildWeb = require('../src/build/Web');
 
 program
   .usage('<platform> [options]')
@@ -19,9 +19,9 @@ function printExample() {
   console.log(chalk.grey('    # build weex iOS project'));
   console.log('    $ ' + chalk.blue('weexpack build ios'));
   console.log();
-  console.log(chalk.grey('    # build weex web project'));
-  console.log('    $ ' + chalk.blue('weexpack build web'));
-  console.log();
+  // console.log(chalk.grey('    # build weex web project'));
+  // console.log('    $ ' + chalk.blue('weexpack build web'));
+  // console.log();
 }
 
 program.on('--help', printExample);

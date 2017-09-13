@@ -7,7 +7,7 @@ const {
 } = require('../utils/config');
 const utils = require('../utils');
 const copy = require('recursive-copy');
-const startJSServer = require('../run/server');
+//const startJSServer = require('../run/server');
 
 function buildAndroid() {
   utils.buildJS()
@@ -21,10 +21,10 @@ function buildAndroid() {
         });
       });
     })
-    .then(() => {
-      startJSServer();
-      return;
-    })
+    // .then(() => {
+    //   startJSServer();
+    //   return;
+    // })
     .then(prepareAndroid)
     .then(resolveConfig)
     .then(buildApp)

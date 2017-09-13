@@ -7,7 +7,7 @@ const {
   Config,
   iOSConfigResolver
 } = require('../utils/config');
-const startJSServer = require('../run/server');
+//const startJSServer = require('../run/server');
 
 function buildIOS() {
   utils.checkAndInstallForIosDeploy()
@@ -15,10 +15,10 @@ function buildIOS() {
     .then(() => {
       return utils.exec('rsync  -r -q ./dist/* platforms/ios/bundlejs/');
     })
-    .then(() => {
-      startJSServer();
-      return;
-    })
+    // .then(() => {
+    //   startJSServer();
+    //   return;
+    // })
     .then(prepareIOS)
     .then(installDep)
     .then(resolveConfig)

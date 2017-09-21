@@ -92,10 +92,16 @@ function resolveConfig({
 }
 
 function doBuild() {
-  return new Promise((resolve) => {
+  return new Promise((resolve,reject) => {
     let child = child_process.exec(path.join(__dirname, 'lib/cocoapods-build') + ' . Debug', {
-      encoding: 'utf8'
-    }, function () {
+      encoding: 'utf8',
+      maxBuffer: 2000*1024
+    }, function (error) {
+      if (error) {
+        console.error(`exec error: ${error}`);
+        reject('doBuild error');
+        return;
+      }
       console.log('Build success!');
       resolve();
     });

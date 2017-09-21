@@ -184,13 +184,16 @@ exports.iOSConfigResolver = new ConfigResolver({
     BuildVersion: {
       type: 'plist',
       key: 'CFBundleVersion'
-    },
-    AppId: {
-      type: 'plist',
-      key: 'CFBundleIdentifier'
     }
   },
   'WeexDemo.xcodeproj/project.pbxproj': {
+    AppId: [{
+      type: 'regexp',
+      key: /(PRODUCT_BUNDLE_IDENTIFIER\s*=\s*).*?(;)/g
+    }, {
+      type: 'plist',
+      key: 'PRODUCT_BUNDLE_IDENTIFIER'
+    }],
     CodeSign: [{
       type: 'regexp',
       key: /("?CODE_SIGN_IDENTITY(?:\[sdk=iphoneos\*])?"?\s*=\s*").*?(")/g
@@ -201,6 +204,9 @@ exports.iOSConfigResolver = new ConfigResolver({
     Profile: [{
       type: 'regexp',
       key: /(PROVISIONING_PROFILE\s*=\s*")[^"]*?(")/g
+    }, {
+      type: 'regexp',
+      key: /(PROVISIONING_PROFILE\s*=\s*).*?(;)/g
     }, {
       type: 'plist',
       key: 'PROVISIONING_PROFILE'

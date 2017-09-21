@@ -4,7 +4,7 @@
 # 功能：编译xcode项目并打ipa包
 # 使用说明：
 #		编译project
-#			ipa-build <project directory> [-c <project configuration>] [-o <ipa output directory>] [-t <target name>] [-n] [-p <platform identifier>]
+#			ipa-build <project directory> [-c <project configuration>] [-o <ipa output directory>] [-t <target name>] [-n]
 #		编译workspace
 #			ipa-build  <workspace directory> -w -s <schemeName> [-c <project configuration>] [-n]
 #
@@ -14,7 +14,8 @@
 #			-w					编译workspace	
 #			-s NAME				对应workspace下需要编译的scheme
 #			-n					编译前是否先clean工程
-#			-p					平台标识符
+#			-b NAME 			NAME.xcodeproj 名字
+#			-m 					使用打包模式 0:Developer 沙盒包 1:Distribution送审包 2:enterprise 企业包
 # 作者：ccf
 # E-mail:ccf.developer@gmail.com
 # 创建日期：2012/09/24
@@ -31,7 +32,10 @@
 # 修改人：ccf
 # 修改内容：增加编译workspace的功能
 #--------------------------------------------
-
+# 修改日期：2017/04/20
+# 修改人：biganans && KINET
+# 修改内容：修改为Archive打包 去掉xcrun模式 xcode8不支持
+#--------------------------------------------
 
 
 if [ $# -lt 1 ];then
@@ -50,31 +54,21 @@ project_path=$(pwd)
 
 #编译的configuration，默认为Release
 build_config=Release
+#默认为develop的测试包 1 app发布包 2企业签名包
+gameModel=0
+#默认工程xcodeproj名字
+gameName=GAME
 
-param_pattern=":p:nc:o:t:ws:"
+param_pattern=":nc:o:t:ws:b:m:"
 OPTIND=2
 while getopts $param_pattern optname
   do
-    case "$optname" in       
+    case "$optname" in
 	  "n")        
-		should_clean=y		
-        ;;
-      "p")
-		tmp_optind=$OPTIND
-		tmp_optname=$optname
-		tmp_optarg=$OPTARG
-
-		OPTIND=$OPTIND-1
-		if getopts $param_pattern optname ;then
-			echo  "Error argument value for option $tmp_optname"
-			exit 2
-		fi
-		OPTIND=$tmp_optind
-
-		platform_id=$tmp_optarg
-		
-        ;;
-      "c")        
+		should_clean=y	
+			
+    ;;
+    "c")        
 		tmp_optind=$OPTIND
 		tmp_optname=$optname
 		tmp_optarg=$OPTARG
@@ -84,33 +78,27 @@ while getopts $param_pattern optname
 			exit 2
 		fi
 		OPTIND=$tmp_optind
-
 		build_config=$tmp_optarg
 		
-        ;;
-      "o")
+    ;;
+    "o")
 		tmp_optind=$OPTIND
 		tmp_optname=$optname
 		tmp_optarg=$OPTARG
-
 		OPTIND=$OPTIND-1
 		if getopts $param_pattern optname ;then
 			echo  "Error argument value for option $tmp_optname"
 			exit 2
 		fi
 		OPTIND=$tmp_optind
-
-
 		cd $tmp_optarg
 		output_path=$(pwd)
-		cd ${project_path}
-
 		if [ ! -d $output_path ];then
 			echo "Error!The value of option o must be an exist directory."
 			exit 2
 		fi
 
-        ;;
+    ;;
 	  "w")
 		workspace_name='*.xcworkspace'
 		ls $project_path/$workspace_name &>/dev/null
@@ -122,39 +110,51 @@ while getopts $param_pattern optname
 			exit 2
 		fi
 		
-        ;;
+    ;;
 	  "s")
 		tmp_optind=$OPTIND
 		tmp_optname=$optname
 		tmp_optarg=$OPTARG
-
 		OPTIND=$OPTIND-1
 		if getopts $param_pattern optname ;then
 			echo  "Error argument value for option $tmp_optname"
 			exit 2
 		fi
 		OPTIND=$tmp_optind
-
 		build_scheme=$tmp_optarg
 		
-        ;;
+    ;;
 	  "t")
 		tmp_optind=$OPTIND
 		tmp_optname=$optname
 		tmp_optarg=$OPTARG
-
 		OPTIND=$OPTIND-1
 		if getopts $param_pattern optname ;then
 			echo  "Error argument value for option $tmp_optname"
 			exit 2
 		fi
 		OPTIND=$tmp_optind
-
 		build_target=$tmp_optarg
 		
-        ;;
+    ;;
+    #游戏名字
+    "b")
+		tmp_optind=$OPTIND
+		tmp_optname=$optname
+		tmp_optarg=$OPTARG
+		gameName=$tmp_optarg
+		# echo $gameName
 
+		;;
+		#游戏模式 
+	  "m")
+		tmp_optind=$OPTIND
+		tmp_optname=$optname
+		tmp_optarg=$OPTARG
+		gameModel=$tmp_optarg
+		# echo $gameModel
 
+		;;
       "?")
         echo "Error! Unknown option $OPTARG"
 		exit 2
@@ -171,23 +171,35 @@ while getopts $param_pattern optname
     esac
   done
 
+#exportArchive的plist配置
+echo $gameModel
+build_option='../GAME_build_option.plist'
+if [[ $gameModel -eq $"1" ]];then
+	build_option='../GAME_build_apptore.plist'
+elif [[ $gameModel -eq $"2" ]];then
+	build_option='../GAME_build_enterprise.plist'
+fi
+echo $build_option
 
 #build文件夹路径
 build_path=${project_path}/build
 #生成的app文件目录
 appdirname=Release-iphoneos
+
 if [ $build_config = Debug ];then
 	appdirname=Debug-iphoneos
 fi
-if [ $build_config = Distribute ];then
-	appdirname=Distribute-iphoneos
+
+if [ $build_config = Distribution ];then
+	appdirname=Distribution-iphoneos
 fi
+
 #编译后文件路径(仅当编译workspace时才会用到)
-compiled_path=${build_path}/${appdirname}
+archive_path=${build_path}/${appdirname}'.xcarchive'
 
 #是否clean
-if [ "$should_clean" = "y" ];then
-	xcodebuild clean -configuration ${build_config}
+if [ "$build_config" = "y" ];then
+	xcodebuild clean
 fi
 
 #组合编译命令
@@ -199,30 +211,18 @@ if [ "$build_workspace" != "" ];then
 		echo "Error! Must provide a scheme by -s option together when using -w option to compile a workspace."
 		exit 2
 	fi
-	
-	LIBRARY_SEARCH_PATHS=${project_path}/Pods/build/Debug-iphoneos
-	if [ $build_config = Debug ];then
-		LIBRARY_SEARCH_PATHS=${project_path}/Pods/build/Debug-iphoneos
-	fi
-	if [ $build_config = Release ];then
-		LIBRARY_SEARCH_PATHS=${project_path}/Pods/build/Release-iphoneos
-	fi
-	build_cmd=${build_cmd}' -workspace '${build_workspace}' -scheme '${build_scheme}' -configuration '${build_config}' -sdk iphoneos build CONFIGURATION_BUILD_DIR='${compiled_path}' ONLY_ACTIVE_ARCH=NO LIBRARY_SEARCH_PATHS='${LIBRARY_SEARCH_PATHS}''
+	build_cmd=${build_cmd}' archive -workspace '${build_workspace}' -scheme '${build_scheme}' -archivePath '${archive_path}
 else
 	#编译project
 	build_cmd=${build_cmd}' -configuration '${build_config}
-
 	if [ "$build_target" != "" ];then
-		build_cmd=${build_cmd}' -target '${build_target}
+	build_cmd=${build_cmd}' -target '${build_target}
 	fi
-	
 fi
-
 
 #编译工程
 cd $project_path
 $build_cmd || exit
-# xcodebuild -workspace WeexDemo.xcworkspace -scheme WeexDemo -configuration Debug -sdk iphoneos build CONFIGURATION_BUILD_DIR=./build/Debug-iphoneos ONLY_ACTIVE_ARCH=NO LIBRARY_SEARCH_PATHS="./Pods/build/Debug-iphoneos" || exit
 
 #进入build路径
 cd $build_path
@@ -233,28 +233,16 @@ if [ -d ./ipa-build ];then
 fi
 mkdir ipa-build
 
+app_infoplist_path='../'${build_scheme}/${build_scheme}'-Info.plist'
 
+pack_cmd='xcodebuild -exportArchive -archivePath '${archive_path}' -exportPath '${build_path}'/ipa-build/ -exportOptionsPlist ../exportOptions-appstore.plist'
+# ${app_infoplist_path}
+echo $pack_cmd
+$pack_cmd || exit
 
-#app文件名称
-appname=$(basename ./${appdirname}/*.app)
-#通过app文件名获得工程target名字
-target_name=$(echo $appname | awk -F. '{print $1}')
-#app文件中Info.plist文件路径
-app_infoplist_path=${build_path}/${appdirname}/${appname}/Info.plist
-#取版本号
-bundleShortVersion=$(/usr/libexec/PlistBuddy -c "print CFBundleShortVersionString" ${app_infoplist_path})
-#取build值
-bundleVersion=$(/usr/libexec/PlistBuddy -c "print CFBundleVersion" ${app_infoplist_path})
-#取displayName
-displayName=$(/usr/libexec/PlistBuddy -c "print CFBundleDisplayName" ${app_infoplist_path})
-#IPA名称
-ipa_name="${displayName}_${platform_id}_${bundleShortVersion}_${build_config}_${bundleVersion}_$(date +"%Y%m%d")"
-echo $ipa_name
+# if [ "$output_path" != "" ];then
+# 	cp ${build_path}/ipa-build/${ipa_name}.ipa $output_path/${ipa_name}.ipa
+# 	echo "Copy ipa file successfully to the path $output_path/${ipa_name}.ipa"
+# fi
 
-#xcrun打包
-xcrun -sdk iphoneos PackageApplication -v ./${appdirname}/*.app -o ${build_path}/ipa-build/${ipa_name}.ipa || exit
-
-if [ "$output_path" != "" ];then
-	cp ${build_path}/ipa-build/${ipa_name}.ipa $output_path/${ipa_name}.ipa
-	echo "Copy ipa file successfully to the path $output_path/${ipa_name}.ipa"
-fi
+echo "Congratulations iap is ok!!"

@@ -208,6 +208,12 @@ exports.iOSConfigResolver = new ConfigResolver({
       type: 'regexp',
       key: /(PROVISIONING_PROFILE\s*=\s*).*?(;)/g
     }, {
+      type: 'regexp',
+      key: /(PROVISIONING_PROFILE_SPECIFIER\s*=\s*")[^"]*?(")/g
+    }, {
+      type: 'regexp',
+      key: /(PROVISIONING_PROFILE_SPECIFIER\s*=\s*).*?(;)/g
+    }, {
       type: 'plist',
       key: 'PROVISIONING_PROFILE'
     }]

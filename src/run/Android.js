@@ -291,8 +291,9 @@ function runApp({
       'utf8'
     ).match(/package="(.+?)"/)[1];
     try {
-      console.log(`adb -s ${device} shell am start -n ${packageName}/.SplashActivity`);
-      child_process.execSync(`adb -s ${device} shell am start -n ${packageName}/.SplashActivity`, {
+      //adb shell am start -n "com.xiudian.weex/com.xiudian.weex.SplashActivity" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
+      console.log(`adb -s ${device} shell am start -n ${packageName}.SplashActivity`);
+      child_process.execSync(`adb -s ${device} shell am start -n ${packageName}.SplashActivity`, {
         encoding: 'utf8'
       });
     } catch (e) {

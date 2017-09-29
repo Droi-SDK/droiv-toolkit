@@ -283,20 +283,22 @@ function runApp({
   device
 }) {
   return new Promise((resolve, reject) => {
-    console.log(` => ${chalk.blue.bold('Running app ...')}`);
+    var runningapp = 'Running app ...' + device;
+    console.log(` => ${chalk.blue.bold(runningapp)}`);
 
     const packageName = fs.readFileSync(
       'app/src/main/AndroidManifest.xml',
       'utf8'
     ).match(/package="(.+?)"/)[1];
     try {
+      console.log(`adb -s ${device} shell am start -n ${packageName}/.SplashActivity`);
       child_process.execSync(`adb -s ${device} shell am start -n ${packageName}/.SplashActivity`, {
         encoding: 'utf8'
       });
     } catch (e) {
+      console.log(e);
       reject(e);
     }
-
     resolve();
   });
 }

@@ -13,14 +13,14 @@ program
 function printExample() {
   console.log('  Examples:');
   console.log();
-  console.log(chalk.grey('    # build weex Android project'));
-  console.log('    $ ' + chalk.blue('weexpack build android'));
+  console.log(chalk.grey('    # build droiv Android project'));
+  console.log('    $ ' + chalk.blue('droiv build android'));
   console.log();
-  console.log(chalk.grey('    # build weex iOS project'));
-  console.log('    $ ' + chalk.blue('weexpack build ios'));
+  console.log(chalk.grey('    # build droiv iOS project'));
+  console.log('    $ ' + chalk.blue('droiv build ios'));
   console.log();
-  // console.log(chalk.grey('    # build weex web project'));
-  // console.log('    $ ' + chalk.blue('weexpack build web'));
+  // console.log(chalk.grey('    # build droiv web project'));
+  // console.log('    $ ' + chalk.blue('droiv build web'));
   // console.log();
 }
 
@@ -34,7 +34,7 @@ function isValidPlatform(args) {
 }
 
 /**
- * Run weex app on the specific platform
+ * Run droiv app on the specific platform
  * @param {String} platform
  */
 function build(platform, options) {
@@ -46,7 +46,7 @@ function build(platform, options) {
       buildIOS(options);
       break;
     case 'web':
-      buildWeb(options);
+      //buildWeb(options);
       break;
   }
 }

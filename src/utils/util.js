@@ -201,7 +201,7 @@ function isDroiv(dir) {
 function cdProjectRoot(dir) {
   var projectRoot = this.isDroiv(dir);
   if (!projectRoot) {
-    throw new CordovaError('Current working directory is not a weexpack project.');
+    throw new CordovaError('Current working directory is not a droiv project.');
   }
   if (!origCwd) {
     origCwd = process.env.PWD || process.cwd();

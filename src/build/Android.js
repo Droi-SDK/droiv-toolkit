@@ -43,7 +43,7 @@ function prepareAndroid() {
       console.log();
       console.log(chalk.red('  Android project not found !'));
       console.log();
-      console.log(`  You should run ${chalk.blue('weexpack init')} first`);
+      console.log(`  You should run ${chalk.blue('droiv init')} first`);
       reject();
     }
 

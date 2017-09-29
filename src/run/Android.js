@@ -63,7 +63,7 @@ function prepareAndroid({
       console.log(rootPath);
       console.log(chalk.red('  Android project not found !'));
       console.log();
-      console.log(`  You should run ${chalk.blue('weexpack create')} or ${chalk.blue('weexpack platform add android')}  first`);
+      console.log(`  You should run ${chalk.blue('droiv create')} or ${chalk.blue('droiv platform add android')}  first`);
       reject();
     }
 

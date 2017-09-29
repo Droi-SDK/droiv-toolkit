@@ -70,7 +70,7 @@ function addHelper(cmd, projectRoot, targets) {
         if (/-nightly|-dev$/.exec(platDetails.version)) {
           msg = 'Warning: using prerelease platform ' + platform +
             '@' + platDetails.version +
-            '.\nUse \'weexpack platform add ' +
+            '.\nUse \'droiv platform add ' +
             platform + '@latest\' to add the latest published version instead.';
           events.emit('warn', msg);
         }
@@ -245,7 +245,7 @@ function platform(command, targets) {
           return;
         } else {
           msg = 'Platform "' + target +
-            '" not recognized as a core weexpack platform. See `' +
+            '" not recognized as a core droiv platform. See `' +
             'droiv' + ' platform list`.';
         }
         throw new CordovaError(msg);

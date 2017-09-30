@@ -164,12 +164,12 @@ function chooseDevice({
       }
 
       inquirer.prompt(
-          [{
-            type: 'list',
-            message: 'Choose one of the following devices',
-            name: 'chooseDevice',
-            choices: listNames
-          }])
+        [{
+          type: 'list',
+          message: 'Choose one of the following devices',
+          name: 'chooseDevice',
+          choices: listNames
+        }])
         .then((answers) => {
           const device = answers.chooseDevice;
           resolve({
@@ -283,17 +283,19 @@ function runApp({
   device
 }) {
   return new Promise((resolve, reject) => {
-    var runningapp = 'Running app ...' + device;
-    console.log(` => ${chalk.blue.bold(runningapp)}`);
-
+    console.log(` => ${chalk.blue.bold('Running app ...')}`);
     const packageName = fs.readFileSync(
       'app/src/main/AndroidManifest.xml',
       'utf8'
     ).match(/package="(.+?)"/)[1];
+    const applicationId = fs.readFileSync(
+      'app/build.gradle',
+      'utf8'
+    ).match(/applicationId "(.+?)"/)[1];
     try {
       //adb shell am start -n "com.xiudian.weex/com.xiudian.weex.SplashActivity" -a android.intent.action.MAIN -c android.intent.category.LAUNCHER
-      console.log(`adb -s ${device} shell am start -n ${packageName}.SplashActivity`);
-      child_process.execSync(`adb -s ${device} shell am start -n ${packageName}.SplashActivity`, {
+      console.log(`adb -s ${device} shell am start -n "${applicationId}/${packageName}.SplashActivity"`);
+      child_process.execSync(`adb -s ${device} shell am start -n "${applicationId}/${packageName}.SplashActivity"`, {
         encoding: 'utf8'
       });
     } catch (e) {

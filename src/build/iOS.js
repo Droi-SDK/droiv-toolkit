@@ -20,8 +20,8 @@ function buildIOS() {
     //   return;
     // })
     .then(prepareIOS)
-    .then(installDep)
     .then(resolveConfig)
+    .then(installDep)
     .then(doBuild)
     .catch((err) => {
       if (err) {
@@ -37,7 +37,7 @@ function prepareIOS() {
       console.log();
       console.log(chalk.red('  iOS project not found !'));
       console.log();
-      console.log(`  You should run ${chalk.blue('droiv init')} first`);
+      console.log(`  You should run ${chalk.blue('weexpack init')} first`);
       reject();
     }
 
@@ -66,11 +66,16 @@ function installDep({
     try {
       console.log(` => ${chalk.blue.bold('pod install')}`);
       let child = child_process.exec('pod install --no-repo-update', {
-        encoding: 'utf8'
-      }, function () {
-        resolve({
-          rootPath
-        });
+        encoding: 'utf8',
+        maxBuffer: 2000*1024
+      }, function (error) {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          reject('pod install error');
+          return;
+        }
+        console.log('pod install success!');
+        resolve(rootPath);
       });
       child.stdout.pipe(process.stdout);
       child.stderr.pipe(process.stderr);

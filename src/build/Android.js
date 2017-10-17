@@ -3,7 +3,8 @@ const chalk = require('chalk');
 const child_process = require('child_process');
 const {
   Config,
-  androidConfigResolver
+  androidConfigResolver,
+  androidUniversalConfigResolver
 } = require('../utils/config');
 const utils = require('../utils');
 const copy = require('recursive-copy');
@@ -27,6 +28,7 @@ function buildAndroid() {
     // })
     .then(prepareAndroid)
     .then(resolveConfig)
+    .then(resolveUniversalConfig)
     .then(buildApp)
     .catch((err) => {
       if (err) {
@@ -73,6 +75,20 @@ function resolveConfig({
   return androidConfig.getConfig().then((config) => {
     androidConfigResolver.resolve(config);
     return;
+  });
+}
+
+function resolveUniversalConfig({
+  options,
+  rootPath
+}) {
+  let androidUniversalConfig = new Config(androidUniversalConfigResolver, path.join(rootPath, 'universal.config.json'));
+  return androidUniversalConfig.getConfig().then((config) => {
+    androidUniversalConfigResolver.resolve(config);
+    return {
+      options,
+      rootPath
+    };
   });
 }
 

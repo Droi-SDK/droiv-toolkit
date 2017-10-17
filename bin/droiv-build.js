@@ -59,7 +59,7 @@ if (program.args.length < 1) {
 
 if (isValidPlatform(program.args)) {
   // TODO: parse config file
-  build(program.args[0], program.config);
+  build(program.args[0], program.args[1]);
 } else {
   console.log();
   console.log(`  ${chalk.red('Unknown platform:')} ${chalk.yellow(program.args[0])}`);

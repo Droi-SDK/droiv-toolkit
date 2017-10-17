@@ -58,6 +58,9 @@ function cli(inputArgs) {
     return lib.create(dir, events || undefined);
     //return lib.raw.create(dir, events || undefined);
 
+  } else if (cmd == 'cp') {
+    var shop_id = undashed[1];
+    lib.copy(shop_id);
   } else {
     // TODO
     // platform/plugin

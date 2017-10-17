@@ -1,6 +1,6 @@
 {
   "name": "droiv-toolkit",
-  "version": "0.0.12",
+  "version": "0.0.14",
   "description": "droiv-toolkit release",
   "contributors": [
     "Marek Chen <c491843272@gmail.com>"
@@ -17,14 +17,6 @@
     "shelljs": "^0.3.0",
     "tar": "^1.0.3",
     "weexpack-common": "^0.1.2"
-  },
-  "devDependencies": {
-    "browserify": "^13.3.0",
-    "eslint": "^3.14.0",
-    "gulp": "^3.9.1",
-    "gulp-babel": "^6.1.2",
-    "gulp-concat": "^2.6.1",
-    "gulp-rename": "^1.2.2"
   },
   "bin": {
     "droiv": "bin/droiv.js"

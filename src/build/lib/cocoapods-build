@@ -30,13 +30,15 @@ project_path=$(pwd)
 #获取工程默认scheme的名字（默认与工程文件名字相同）
 scheme_name=$(echo $(basename ./*.xcodeproj) | awk -F. '{print $1}')
 
-build_cmd=${shell_path}'/ipa-build '${project_path}' -w -s '${scheme_name}' -t '${scheme_name}' -b '${scheme_name}' -m 1'
-echo ${build_cmd}
-if [ $# = 2 ];then
-	build_cmd=${build_cmd}' -c '$2
-fi
+gym --workspace ${workspace_path} --scheme ${scheme} --clean --configuration ${configuration} --archive_path ${archive_path} --export_method ${export_method} --export_options ${export_options} --output_directory ${output_path} --output_name ${ipa_name}
 
-#编译工程
-${build_cmd} 
+# build_cmd=${shell_path}'/ipa-build '${project_path}' -w -s '${scheme_name}' -t '${scheme_name}' -b '${scheme_name}' -m 1'
+# echo ${build_cmd}
+# if [ $# = 2 ];then
+# 	build_cmd=${build_cmd}' -c '$2
+# fi
+
+# #编译工程
+# ${build_cmd} 
 
 

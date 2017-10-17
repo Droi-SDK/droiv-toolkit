@@ -7,7 +7,8 @@ const utils = require('../utils');
 const startJSServer = require('./server');
 const {
   Config,
-  iOSConfigResolver
+  iOSConfigResolver,
+  iOSUniversalConfigResolver
 } = require('../utils/config');
 
 /**
@@ -29,6 +30,7 @@ function runIOS(options) {
     .then(prepareIOS)
     .then(installDep)
     .then(resolveConfig)
+    .then(resolveUniversalConfig)
     .then(findIOSDevice)
     .then(chooseDevice)
     .then(buildApp)
@@ -114,7 +116,17 @@ function resolveConfig({
   let iOSConfig = new Config(iOSConfigResolver, path.join(rootPath, 'ios.config.json'));
   return iOSConfig.getConfig().then((config) => {
     iOSConfigResolver.resolve(config);
-    fs.writeFileSync(path.join(process.cwd(), 'bundlejs/index.js'), fs.readFileSync(path.join(process.cwd(), '../../dist', config.WeexBundle.replace(/\.we$/, '.js'))));
+    // fs.writeFileSync(path.join(process.cwd(), 'bundlejs/index.js'), fs.readFileSync(path.join(process.cwd(), '../../dist', config.WeexBundle.replace(/\.we$/, '.js'))));
+    return {rootPath};
+  });
+}
+
+function resolveUniversalConfig({
+  rootPath
+}) {
+  let iOSUniversalConfig = new Config(iOSUniversalConfigResolver, path.join(rootPath, 'universal.config.json'));
+  return iOSUniversalConfig.getConfig().then((config) => {
+    iOSUniversalConfigResolver.resolve(config);
     return {};
   });
 }
@@ -460,6 +472,7 @@ function _runAppOnDevice({
     reject(e);
   }
   console.log('Success!');
+  resolve();
   // reject('Weex-Pack don\'t support run on real device. see you next version!')
 }
 

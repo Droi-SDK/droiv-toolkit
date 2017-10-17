@@ -235,7 +235,7 @@ mkdir ipa-build
 
 app_infoplist_path='../'${build_scheme}/${build_scheme}'-Info.plist'
 
-pack_cmd='xcodebuild -exportArchive -archivePath '${archive_path}' -exportPath '${build_path}'/ipa-build/ -exportOptionsPlist ../exportOptions-appstore.plist'
+pack_cmd='xcodebuild -exportArchive -archivePath '${archive_path}' -exportPath '${build_path}'/ipa-build/ -exportOptionsPlist ../exportOptions-adhoc.plist'
 # ${app_infoplist_path}
 echo $pack_cmd
 $pack_cmd || exit

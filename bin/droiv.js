@@ -7,7 +7,8 @@ program
   .command('create [name]', 'initialize a standard droiv project')
   .command('platform [command]', 'command for add or remove a  platform project')
   .command('run [platform]', 'run droiv app on the specific platform')
-  .command('build [platform]', 'build droiv app generator package(apk or ipa)');
+  .command('build [platform]', 'build droiv app generator package(apk or ipa)')
+  .command('cp [shop_id]', 'copy src from custom/[shop_id]');
 program.parse(process.argv);
 
 if (program.args.length < 1) {
@@ -17,7 +18,7 @@ if (program.args.length < 1) {
 
 if (program.args.length >= 1) {
   var isSupport = false;
-  var list = ['create', 'platform', 'run', 'build', 'plugin', 'droivplugin', 'market'];
+  var list = ['create', 'platform', 'run', 'build', 'plugin', 'cp', 'market'];
   for (var i = 0; i < list.length; i++) {
     if (program.args[0] == list[i]) {
       isSupport = true;

@@ -109,20 +109,32 @@ const replacer = {
     let r = new RegExp('(<key>' + key + '</key>\\s*<string>)[^<>]*?<\/string>', 'g');
     return source.replace(r, '$1' + value + '</string>');
   },
+  url_types(source, key, value) {
+    let r = new RegExp('(<key>CFBundleURLName</key>\\s*<string>' + key + '</string>\\s*<key>CFBundleURLSchemes</key>\\s*<array>\\s*<string>)[^<>]*?<\/string>', 'g');
+    return source.replace(r, '$1' + value + '</string>');
+  },
+  manifestPlaceholders(source, key, value){
+    let r = new RegExp('("' + key + '":\\s*")[^"]*"', 'g');
+    return source.replace(r, '$1' + value + '"');
+  },
+  fastfile(source, key, value){
+    let r = new RegExp('("' + key + '":\\s*")[^"]*"', 'g');
+    return source.replace(r, '$1' + value + '"');
+  },
   xmlTag(source, key, value, tagName = 'string') {
     let r = new RegExp(`<${tagName} name="${key}">[^<]+?</${tagName}>`, 'g');
     return source.replace(r, `<${tagName} name="${key}">${value}</${tagName}>`);
   },
-  xmlAttr(source, key, value, tagName = 'string') {
+  xmlAttr(source, key, value, tagName = 'preference') {
     let r = new RegExp(`<${tagName} name="${key}"\\s* value="[^"]*?"\\s*/>`, 'g');
     return source.replace(r, `<${tagName} name="${key}" value="${value}"/>`);
   },
   regexp(source, regexp, value) {
     return source.replace(regexp, function (m, a, b) {
-      console.log(value);
-      console.log(m);
-      console.log(a);
-      console.log(b);
+      // console.log(value);
+      // console.log(m);
+      // console.log(a);
+      // console.log(b);
       return a + value + (b || '');
     });
   }
@@ -130,6 +142,42 @@ const replacer = {
 
 exports.Config = Config;
 exports.ConfigResolver = ConfigResolver;
+
+exports.androidUniversalConfigResolver = new ConfigResolver({
+  'app/src/main/res/xml/app_config.xml': {
+    WeixinId: {
+      type: 'xmlAttr',
+      key: 'weixin_id'
+    },
+    WeixinKey: {
+      type: 'xmlAttr',
+      key: 'weixin_key'
+    },
+    QQId: {
+      type: 'xmlAttr',
+      key: 'qq_id'
+    },
+    QQKey: {
+      type: 'xmlAttr',
+      key: 'qq_key'
+    },
+    WeiboId: {
+      type: 'xmlAttr',
+      key: 'weibo_id'
+    },
+    WeiboKey: {
+      type: 'xmlAttr',
+      key: 'weibo_key'
+    },
+  },
+  'app/build.gradle':{
+    QQId:{
+      type:'manifestPlaceholders',
+      key:'QQ_Id'
+    }
+  }
+});
+
 exports.androidConfigResolver = new ConfigResolver({
   'app/build.gradle': {
     AppId: {
@@ -150,10 +198,10 @@ exports.androidConfigResolver = new ConfigResolver({
       type: 'xmlTag',
       key: 'app_name'
     },
-    SplashText: {
-      type: 'xmlTag',
-      key: 'dummy_content'
-    }
+    // SplashText: {
+    //   type: 'xmlTag',
+    //   key: 'dummy_content'
+    // }
   },
   'app/src/main/res/xml/app_config.xml': {
     WeexBundle: {
@@ -171,8 +219,46 @@ exports.androidConfigResolver = new ConfigResolver({
   }
 });
 
+exports.iOSUniversalConfigResolver = new ConfigResolver({
+  'WeeXTemplate/Info.plist': {
+    WeixinId: [{
+      type: 'url_types',
+      key: 'weixin'
+    }, {
+      type: 'plist',
+      key: 'WeixinId'
+    }],
+    WeixinKey: {
+      type: 'plist',
+      key: 'WeixinKey'
+    },
+    QQId: [{
+      type: 'url_types',
+      key: 'tencent'
+    }, {
+      type: 'plist',
+      key: 'QQId'
+    }],
+    QQKey: {
+      type: 'plist',
+      key: 'QQKey'
+    },
+    WeiboId: [{
+      type: 'url_types',
+      key: 'com.weibo'
+    }, {
+      type: 'plist',
+      key: 'WeiboId'
+    }],
+    WeiboKey: {
+      type: 'plist',
+      key: 'WeiboKey'
+    },
+  },
+});
+
 exports.iOSConfigResolver = new ConfigResolver({
-  'WeexDemo/WeexDemo-Info.plist': {
+  'WeeXTemplate/Info.plist': {
     AppName: {
       type: 'plist',
       key: 'CFBundleDisplayName'
@@ -186,36 +272,53 @@ exports.iOSConfigResolver = new ConfigResolver({
       key: 'CFBundleVersion'
     }
   },
-  'WeexDemo.xcodeproj/project.pbxproj': {
-    AppId: [{
+  'fastlane/Fastfile': {
+    AppId: {
+      type: 'regexp',
+      key: /(app_identifier: ')[^']*(')/g
+    },
+    AppName: {
+      type: 'regexp',
+      key: /(app_name: ')[^']*(')/g
+    }
+  },
+  'fastlane/Appfile': {
+    AppId: {
+      type: 'regexp',
+      key: /(app_identifier ')[^']*(')/g
+    }
+  },
+  'WeeXTemplate.xcodeproj/project.pbxproj': {
+    AppId: {
       type: 'regexp',
       key: /(PRODUCT_BUNDLE_IDENTIFIER\s*=\s*).*?(;)/g
-    }, {
-      type: 'plist',
-      key: 'PRODUCT_BUNDLE_IDENTIFIER'
-    }],
-    CodeSign: [{
-      type: 'regexp',
-      key: /("?CODE_SIGN_IDENTITY(?:\[sdk=iphoneos\*])?"?\s*=\s*").*?(")/g
-    }, {
-      type: 'plist',
-      key: 'CODE_SIGN_IDENTITY(\\[sdk=iphoneos\\*])?'
-    }],
-    Profile: [{
-      type: 'regexp',
-      key: /(PROVISIONING_PROFILE\s*=\s*")[^"]*?(")/g
-    }, {
-      type: 'regexp',
-      key: /(PROVISIONING_PROFILE\s*=\s*).*?(;)/g
-    }, {
-      type: 'regexp',
-      key: /(PROVISIONING_PROFILE_SPECIFIER\s*=\s*")[^"]*?(")/g
-    }, {
-      type: 'regexp',
-      key: /(PROVISIONING_PROFILE_SPECIFIER\s*=\s*).*?(;)/g
-    }, {
-      type: 'plist',
-      key: 'PROVISIONING_PROFILE'
-    }]
+    },
+    // {
+    //   type: 'plist',
+    //   key: 'PRODUCT_BUNDLE_IDENTIFIER'
+    // },
+    // CodeSign: [{
+    //   type: 'regexp',
+    //   key: /("?CODE_SIGN_IDENTITY(?:\[sdk=iphoneos\*])?"?\s*=\s*").*?(")/g
+    // }, {
+    //   type: 'plist',
+    //   key: 'CODE_SIGN_IDENTITY(\\[sdk=iphoneos\\*])?'
+    // }],
+    // Profile: [{
+    //   type: 'regexp',
+    //   key: /(PROVISIONING_PROFILE\s*=\s*")[^"]*?(")/g
+    // }, {
+    //   type: 'regexp',
+    //   key: /(PROVISIONING_PROFILE\s*=\s*).*?(;)/g
+    // }, {
+    //   type: 'regexp',
+    //   key: /(PROVISIONING_PROFILE_SPECIFIER\s*=\s*")[^"]*?(")/g
+    // }, {
+    //   type: 'regexp',
+    //   key: /(PROVISIONING_PROFILE_SPECIFIER\s*=\s*).*?(;)/g
+    // }, {
+    //   type: 'plist',
+    //   key: 'PROVISIONING_PROFILE'
+    // }]
   }
 });

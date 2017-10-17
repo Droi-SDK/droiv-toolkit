@@ -8,7 +8,8 @@ const utils = require('../utils');
 const startJSServer = require('./server');
 const {
   Config,
-  androidConfigResolver
+  androidConfigResolver,
+  androidUniversalConfigResolver
 } = require('../utils/config');
 
 /**
@@ -36,6 +37,7 @@ function runAndroid(options) {
     })
     .then(prepareAndroid)
     .then(resolveConfig)
+    .then(resolveUniversalConfig)
     .then(findAndroidDevice)
     .then(chooseDevice)
     .then(reverseDevice)
@@ -109,6 +111,20 @@ function resolveConfig({
   let androidConfig = new Config(androidConfigResolver, path.join(rootPath, 'android.config.json'));
   return androidConfig.getConfig().then((config) => {
     androidConfigResolver.resolve(config);
+    return {
+      options,
+      rootPath
+    };
+  });
+}
+
+function resolveUniversalConfig({
+  options,
+  rootPath
+}) {
+  let androidUniversalConfig = new Config(androidUniversalConfigResolver, path.join(rootPath, 'universal.config.json'));
+  return androidUniversalConfig.getConfig().then((config) => {
+    androidUniversalConfigResolver.resolve(config);
     return {
       options,
       rootPath

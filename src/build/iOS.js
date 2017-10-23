@@ -10,6 +10,7 @@ const {
 } = require('../utils/config');
 //const startJSServer = require('../run/server');
 var export_method;
+var XDId;
 
 function buildIOS(options) {
   console.log("mod:" + options);
@@ -95,8 +96,9 @@ function fastlane_sigh({
 function resolveExportOptions({
   rootPath
 }) {
-  var config = require(path.join(rootPath, 'ios.config.json'));
+  var config = require(path.join(rootPath, 'config.json'))['universal'];
   var AppId = config['AppId'];
+  XDId = config['XDId'];
   var method = '';
   if (export_method == 'adhoc') {
     method = 'AdHoc';
@@ -172,10 +174,10 @@ function installDep({
 function resolveConfig({
   rootPath
 }) {
-  let iOSConfig = new Config(iOSConfigResolver, path.join(rootPath, 'ios.config.json'));
+  let iOSConfig = new Config(iOSConfigResolver, path.join(rootPath, 'config.json'),'ios');
   return iOSConfig.getConfig().then((config) => {
     iOSConfigResolver.resolve(config);
-    fs.writeFileSync(path.join(process.cwd(), 'bundlejs/index.js'), fs.readFileSync(path.join(process.cwd(), '../../dist', config.WeexBundle.replace(/\.we$/, '.js'))));
+    // fs.writeFileSync(path.join(process.cwd(), 'bundlejs/index.js'), fs.readFileSync(path.join(process.cwd(), '../../dist', config.WeexBundle.replace(/\.we$/, '.js'))));
     return {
       rootPath
     };
@@ -185,7 +187,7 @@ function resolveConfig({
 function resolveUniversalConfig({
   rootPath
 }) {
-  let iOSUniversalConfig = new Config(iOSUniversalConfigResolver, path.join(rootPath, 'universal.config.json'));
+  let iOSUniversalConfig = new Config(iOSUniversalConfigResolver, path.join(rootPath, 'config.json'),'universal');
   return iOSUniversalConfig.getConfig().then((config) => {
     iOSUniversalConfigResolver.resolve(config);
     return {};
@@ -194,7 +196,7 @@ function resolveUniversalConfig({
 
 function doBuild() {
   return new Promise((resolve, reject) => {
-    let child = child_process.exec(path.join(__dirname, 'lib/build_archive') + ' . ' + export_method, {
+    let child = child_process.exec(path.join(__dirname, 'lib/build_archive') + ' . ' + export_method +' '+XDId, {
       encoding: 'utf8',
       maxBuffer: 2000 * 1024
     }, function (error) {

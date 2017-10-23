@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #参数判断
-if [ $# != 2 ] && [ $# != 1 ];then
-  echo "Number of params error! Need one or two params!"
+if [ $# != 2 ] && [ $# != 3 ];then
+  echo "Number of params error! Need two or three params!"
   echo "1.path of project(necessary) 2.Build Configurations(optional,default is Release)"
   exit
 elif [ ! -d $1 ];then
@@ -34,6 +34,8 @@ else
   export_method='app-store'
 fi
 
+XDId=$3
+
 #指定项目的scheme名称
 scheme="WeeXTemplate"
 #指定要打包的配置名
@@ -46,18 +48,16 @@ workspace_path="$project_path/${scheme}.xcworkspace"
 #指定输出路径
 output_path="$project_path/Build"
 #指定输出归档文件地址
-archive_path="$output_path/${scheme}_${now}.xcarchive"
-#指定输出ipa地址
-ipa_path="$output_path/${scheme}_${now}.ipa"
+archive_path="$output_path/${XDId}_${now}.xcarchive"
 #指定输出ipa名称
-ipa_name="${scheme}_${now}.ipa"
+ipa_name="${XDId}_${now}.ipa"
 #获取执行命令时的commit message
 commit_msg="$1"
 
 #输出设定的变量值
 echo "==>workspace path: ${workspace_path}==="
 echo "==>archive path: ${archive_path}==="
-echo "==>ipa path: ${ipa_path}==="
+echo "==>ipa path: ${ipa_name}==="
 echo "==>export method: ${export_method}==="
 echo "==>commit msg: $1==="
 

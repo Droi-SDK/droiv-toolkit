@@ -1,6 +1,7 @@
 const path = require('path');
 const chalk = require('chalk');
 const child_process = require('child_process');
+const fs = require('fs');
 const {
   Config,
   androidConfigResolver,
@@ -29,6 +30,7 @@ function buildAndroid() {
     .then(prepareAndroid)
     .then(resolveConfig)
     .then(resolveUniversalConfig)
+    .then(resolveShareJava)
     .then(buildApp)
     .catch((err) => {
       if (err) {
@@ -71,25 +73,58 @@ function prepareAndroid() {
 function resolveConfig({
   rootPath
 }) {
-  let androidConfig = new Config(androidConfigResolver, path.join(rootPath, 'android.config.json'));
+  let androidConfig = new Config(androidConfigResolver, path.join(rootPath, 'config.json'), 'android');
   return androidConfig.getConfig().then((config) => {
     androidConfigResolver.resolve(config);
-    return;
+    return ({
+      rootPath
+    });
   });
 }
 
 function resolveUniversalConfig({
-  options,
   rootPath
 }) {
-  let androidUniversalConfig = new Config(androidUniversalConfigResolver, path.join(rootPath, 'universal.config.json'));
+  let androidUniversalConfig = new Config(androidUniversalConfigResolver, path.join(rootPath, 'config.json'), 'universal');
   return androidUniversalConfig.getConfig().then((config) => {
     androidUniversalConfigResolver.resolve(config);
     return {
-      options,
       rootPath
     };
   });
+}
+
+function resolveShareJava({
+  rootPath
+}) {
+  var config = require(path.join(rootPath, 'config.json'))['universal'];
+  var XDId = config['XDId'];
+
+  var basePath = process.cwd();
+  var oldPath = path.join(basePath, 'app/src/main/java/com/xiudian/', 'xdid');
+  var newPath = path.join(basePath, 'app/src/main/java/com/xiudian/', XDId);
+  var exists = fs.existsSync(oldPath);
+  if (exists) {
+    console.log(`${oldPath} 存在`)
+    let r = new RegExp('(package com.xiudian.)[^.;]*(;)', 'g');
+    let targetPath = path.join(basePath, 'app/src/main/java/com/xiudian/xdid/WBShareActivity.java');
+    console.log("targetPath:" + targetPath);
+    let source = fs.readFileSync(targetPath).toString();
+    source = source.replace(r, '$1' + XDId + '$2');
+    fs.writeFileSync(targetPath, source);
+
+    let r2 = new RegExp('(package com.xiudian.)[^.;]*(.wxapi;)', 'g');
+    let targetPath2 = path.join(basePath, 'app/src/main/java/com/xiudian/xdid/wxapi/WXEntryActivity.java');
+    console.log("targetPath2:" + targetPath2);
+    let source2 = fs.readFileSync(targetPath2).toString();
+    source2 = source2.replace(r2, '$1' + XDId + '$2');
+    fs.writeFileSync(targetPath2, source2);
+
+    fs.renameSync(oldPath, newPath);
+    return {
+      rootPath
+    };
+  }
 }
 
 function buildApp() {

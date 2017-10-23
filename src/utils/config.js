@@ -2,8 +2,9 @@ const Fs = require('fs');
 const Path = require('path');
 const Inquirer = require('inquirer');
 class Config {
-  constructor(properties, path) {
+  constructor(properties, path, platform) {
     this.path = path;
+    this.platform = platform;
     if (properties instanceof ConfigResolver) {
       let map = {};
       this.properties = [];
@@ -33,7 +34,7 @@ class Config {
     return new Promise((resolve) => {
       let config = {};
       try {
-        config = require(this.path);
+        config = require(this.path)[this.platform];
       } catch (e) {
         console.log(e);
       }
@@ -171,19 +172,25 @@ exports.androidUniversalConfigResolver = new ConfigResolver({
     },
   },
   'app/build.gradle':{
+    AppId: {
+      type: 'regexp',
+      key: /(applicationId ")[^"]*(")/g
+    },
     QQId:{
       type:'manifestPlaceholders',
       key:'QQ_Id'
+    }
+  },
+  'app/src/main/res/values/strings.xml': {
+    AppName: {
+      type: 'xmlTag',
+      key: 'app_name'
     }
   }
 });
 
 exports.androidConfigResolver = new ConfigResolver({
   'app/build.gradle': {
-    AppId: {
-      type: 'regexp',
-      key: /(applicationId ")[^"]*(")/g
-    },
     VersionName: {
       type: 'regexp',
       key: /(versionName ")[^"]*(")/g
@@ -191,36 +198,16 @@ exports.androidConfigResolver = new ConfigResolver({
     VersionCode: {
       type: 'regexp',
       key: /(versionCode )[0-9]+(\s)/g
-    },
-  },
-  'app/src/main/res/values/strings.xml': {
-    AppName: {
-      type: 'xmlTag',
-      key: 'app_name'
-    },
-    // SplashText: {
-    //   type: 'xmlTag',
-    //   key: 'dummy_content'
-    // }
-  },
-  'app/src/main/res/xml/app_config.xml': {
-    WeexBundle: {
-      handler: function (source, value, replacer) {
-        if (/https?/.test(value)) {
-          source = replacer.xmlAttr(source, 'launch_locally', 'false', 'preference');
-          return replacer.xmlAttr(source, 'launch_url', value, 'preference');
-        } else {
-          source = replacer.xmlAttr(source, 'launch_locally', 'true', 'preference');
-          let name = value.replace(/\.(we|vue)$/, '.js');
-          return replacer.xmlAttr(source, 'local_url', 'file://assets/dist/' + name, 'preference');
-        }
-      }
     }
   }
 });
 
 exports.iOSUniversalConfigResolver = new ConfigResolver({
   'WeeXTemplate/Info.plist': {
+    AppName: {
+      type: 'plist',
+      key: 'CFBundleDisplayName'
+    },
     WeixinId: [{
       type: 'url_types',
       key: 'weixin'
@@ -255,23 +242,6 @@ exports.iOSUniversalConfigResolver = new ConfigResolver({
       key: 'WeiboKey'
     },
   },
-});
-
-exports.iOSConfigResolver = new ConfigResolver({
-  'WeeXTemplate/Info.plist': {
-    AppName: {
-      type: 'plist',
-      key: 'CFBundleDisplayName'
-    },
-    Version: {
-      type: 'plist',
-      key: 'CFBundleShortVersionString'
-    },
-    BuildVersion: {
-      type: 'plist',
-      key: 'CFBundleVersion'
-    }
-  },
   'fastlane/Fastfile': {
     AppId: {
       type: 'regexp',
@@ -292,33 +262,19 @@ exports.iOSConfigResolver = new ConfigResolver({
     AppId: {
       type: 'regexp',
       key: /(PRODUCT_BUNDLE_IDENTIFIER\s*=\s*).*?(;)/g
+    }
+  }
+});
+
+exports.iOSConfigResolver = new ConfigResolver({
+  'WeeXTemplate/Info.plist': {
+    Version: {
+      type: 'plist',
+      key: 'CFBundleShortVersionString'
     },
-    // {
-    //   type: 'plist',
-    //   key: 'PRODUCT_BUNDLE_IDENTIFIER'
-    // },
-    // CodeSign: [{
-    //   type: 'regexp',
-    //   key: /("?CODE_SIGN_IDENTITY(?:\[sdk=iphoneos\*])?"?\s*=\s*").*?(")/g
-    // }, {
-    //   type: 'plist',
-    //   key: 'CODE_SIGN_IDENTITY(\\[sdk=iphoneos\\*])?'
-    // }],
-    // Profile: [{
-    //   type: 'regexp',
-    //   key: /(PROVISIONING_PROFILE\s*=\s*")[^"]*?(")/g
-    // }, {
-    //   type: 'regexp',
-    //   key: /(PROVISIONING_PROFILE\s*=\s*).*?(;)/g
-    // }, {
-    //   type: 'regexp',
-    //   key: /(PROVISIONING_PROFILE_SPECIFIER\s*=\s*")[^"]*?(")/g
-    // }, {
-    //   type: 'regexp',
-    //   key: /(PROVISIONING_PROFILE_SPECIFIER\s*=\s*).*?(;)/g
-    // }, {
-    //   type: 'plist',
-    //   key: 'PROVISIONING_PROFILE'
-    // }]
+    BuildVersion: {
+      type: 'plist',
+      key: 'CFBundleVersion'
+    }
   }
 });

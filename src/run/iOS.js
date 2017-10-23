@@ -113,7 +113,7 @@ function installDep({
 function resolveConfig({
   rootPath
 }) {
-  let iOSConfig = new Config(iOSConfigResolver, path.join(rootPath, 'ios.config.json'));
+  let iOSConfig = new Config(iOSConfigResolver, path.join(rootPath, 'config.json'),'ios');
   return iOSConfig.getConfig().then((config) => {
     iOSConfigResolver.resolve(config);
     // fs.writeFileSync(path.join(process.cwd(), 'bundlejs/index.js'), fs.readFileSync(path.join(process.cwd(), '../../dist', config.WeexBundle.replace(/\.we$/, '.js'))));
@@ -124,7 +124,7 @@ function resolveConfig({
 function resolveUniversalConfig({
   rootPath
 }) {
-  let iOSUniversalConfig = new Config(iOSUniversalConfigResolver, path.join(rootPath, 'universal.config.json'));
+  let iOSUniversalConfig = new Config(iOSUniversalConfig, path.join(rootPath, 'config.json'),'universal');
   return iOSUniversalConfig.getConfig().then((config) => {
     iOSUniversalConfigResolver.resolve(config);
     return {};
@@ -301,7 +301,7 @@ function _buildOnRealDevice({
   rootPath
 }) {
   // @TODO support debug on real device
-  let iOSConfig = new Config(iOSConfigResolver, path.join(rootPath, 'ios.config.json'));
+  let iOSConfig = new Config(iOSConfigResolver, path.join(rootPath, 'config.json'),'ios');
   iOSConfig.getConfig().then((config) => {
     try {
       iOSConfigResolver.resolve(config);
